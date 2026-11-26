@@ -25,9 +25,9 @@ public class SampleModelTests
 
 	private const int ImageSize = 256;
 	// A pixel counts as different when one channel differs by more than this (0-255)
-	private const int PixelThreshold = 24;
+	public const int PixelThreshold = 24;
 	// Maximum fraction of different pixels, leaves room for anti-aliasing differences at edges
-	private const float MaxDifferentPixels = 0.002f;
+	public const float MaxDifferentPixels = 0.002f;
 
 	// Known failures, caused by export settings rather than bugs:
 	// - NormalTangentTest (Roundtrip_LooksTheSame, with URP): textures without alpha are exported as JPEG by default
@@ -356,7 +356,7 @@ public class SampleModelTests
 	/// <summary>
 	/// Renders the model in a preview scene. Without bounds the camera frames the model and returns the bounds it used.
 	/// </summary>
-	private static Texture2D Render(GameObject model, AnimationClip clip, float time, Bounds? framing, out Bounds bounds)
+	public static Texture2D Render(GameObject model, AnimationClip clip, float time, Bounds? framing, out Bounds bounds)
 	{
 		var preview = new PreviewRenderUtility();
 		var materialCopies = new List<Material>();
@@ -424,7 +424,7 @@ public class SampleModelTests
 	/// <summary>
 	/// Returns the fraction of different pixels and writes an [expected | actual | difference] image.
 	/// </summary>
-	private static float Compare(Texture2D expected, Texture2D actual, string imagePath, out float emptyFraction)
+	public static float Compare(Texture2D expected, Texture2D actual, string imagePath, out float emptyFraction)
 	{
 		Assert.AreEqual(expected.width, actual.width);
 		Assert.AreEqual(expected.height, actual.height);

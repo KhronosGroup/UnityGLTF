@@ -81,7 +81,7 @@ public partial class RigImportTests
 	/// <summary>
 	/// Sets the import settings of an asset in the temp folder and reimports it.
 	/// </summary>
-	internal static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true, bool humanoidClips = false)
+	public static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true, bool humanoidClips = false)
 	{
 		UseGltfImporter(path);
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
@@ -98,7 +98,20 @@ public partial class RigImportTests
 		importer.SaveAndReimport();
 	}
 
-	internal static GameObject LoadModel(string path)
+	/// <summary>
+	/// The textures of a .gltf are separate assets with Unity's default import settings, so sRGB and normal maps are wrong
+	/// until the importer's "Fix All" is applied (a .glb gets them right while importing). Reimports the model afterwards.
+	/// </summary>
+	public static void FixTextureImportSettings(string path)
+	{
+		if (!path.EndsWith(".gltf", System.StringComparison.OrdinalIgnoreCase)) return;
+		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
+		if (!importer || GLTFImporterHelper.TextureImportSettingsAreCorrect(importer)) return;
+		GLTFImporterHelper.FixTextureImportSettings(importer);
+		importer.SaveAndReimport();
+	}
+
+	public static GameObject LoadModel(string path)
 	{
 		var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
 		Assert.IsTrue(model, $"No model imported at {path}");
@@ -107,7 +120,7 @@ public partial class RigImportTests
 
 	internal static Avatar LoadAvatar(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<Avatar>().SingleOrDefault();
 
-	internal static AnimationClip[] LoadClips(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().ToArray();
+	public static AnimationClip[] LoadClips(string path) => AssetDatabase.LoadAllAssetsAtPath(path).OfType<AnimationClip>().ToArray();
 
 	private static void AssertClipBindingsResolve(string path)
 	{

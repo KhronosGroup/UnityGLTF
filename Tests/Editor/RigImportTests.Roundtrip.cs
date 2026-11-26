@@ -371,11 +371,12 @@ public partial class RigImportTests
 	/// <summary>
 	/// Exports an instance of the imported model, then imports the exported file with the same settings.
 	/// </summary>
-	internal static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName, bool humanoidClips = false)
+	public static string ExportAndReimport(string path, AnimationMethod method, string rootNodeName, bool humanoidClips = false, bool gltf = false, string exportFolder = null)
 	{
 		var model = LoadModel(path);
 		var clips = LoadClips(path);
-		var exportPath = $"{path.Substring(0, path.LastIndexOf('/'))}/{Path.GetFileNameWithoutExtension(path)}_{method}_{rootNodeName}_Roundtrip.glb";
+		if (exportFolder != null) Directory.CreateDirectory(exportFolder);
+		var exportPath = $"{exportFolder ?? path.Substring(0, path.LastIndexOf('/'))}/{Path.GetFileNameWithoutExtension(path)}_{method}_{rootNodeName}_Roundtrip{(gltf ? ".gltf" : ".glb")}";
 
 		var instance = Object.Instantiate(model);
 		instance.name = model.name;
@@ -402,7 +403,10 @@ public partial class RigImportTests
 			foreach (var camera in instance.GetComponentsInChildren<Camera>(true))
 				camera.enabled = true;
 			var exporter = new GLTFSceneExporter(instance.transform, new ExportContext(settings));
-			File.WriteAllBytes(exportPath, exporter.SaveGLBToByteArray(Path.GetFileNameWithoutExtension(exportPath)));
+			if (gltf)
+				exporter.SaveGLTFandBin(Path.GetDirectoryName(exportPath), Path.GetFileNameWithoutExtension(exportPath));
+			else
+				File.WriteAllBytes(exportPath, exporter.SaveGLBToByteArray(Path.GetFileNameWithoutExtension(exportPath)));
 		}
 		finally
 		{
@@ -411,8 +415,11 @@ public partial class RigImportTests
 			Object.DestroyImmediate(settings);
 		}
 
+		// A .gltf depends on its .bin and textures: without them in the AssetDatabase, the importer logs "invalid import dependency"
+		if (gltf || exportFolder != null) AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 		AssetDatabase.ImportAsset(exportPath, ImportAssetOptions.ForceSynchronousImport);
 		Reimport(exportPath, method, rootNodeName, humanoidClips: humanoidClips);
+		FixTextureImportSettings(exportPath);
 		return exportPath;
 	}
 
@@ -422,7 +429,7 @@ public partial class RigImportTests
 			.ToDictionary(t => AnimationUtility.CalculateTransformPath(t, model.transform), t => t);
 	}
 
-	internal static void AssertHierarchyEqual(string expectedPath, string actualPath)
+	public static void AssertHierarchyEqual(string expectedPath, string actualPath)
 	{
 		var expected = TransformsByPath(LoadModel(expectedPath));
 		var actual = TransformsByPath(LoadModel(actualPath));
@@ -440,7 +447,7 @@ public partial class RigImportTests
 		}
 	}
 
-	internal static void AssertMeshesEqual(string expectedPath, string actualPath)
+	public static void AssertMeshesEqual(string expectedPath, string actualPath)
 	{
 		var expected = TransformsByPath(LoadModel(expectedPath));
 		var actual = TransformsByPath(LoadModel(actualPath));
@@ -484,7 +491,7 @@ public partial class RigImportTests
 		}
 	}
 
-	internal static void AssertAnimationsEqual(string expectedPath, string actualPath)
+	public static void AssertAnimationsEqual(string expectedPath, string actualPath)
 	{
 		var expectedClips = LoadClips(expectedPath).ToDictionary(c => c.name);
 		var actualClips = LoadClips(actualPath).ToDictionary(c => c.name);
