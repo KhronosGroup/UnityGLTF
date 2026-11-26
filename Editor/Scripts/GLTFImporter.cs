@@ -51,7 +51,8 @@ namespace UnityGLTF
 #endif
     public class GLTFImporter : ScriptedImporter
     {
-	    private const int ImporterVersion = 10;
+	    // 11: import results moved into the GLTFImportInfo sub-asset
+	    private const int ImporterVersion = 11;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
@@ -89,8 +90,7 @@ namespace UnityGLTF
         [SerializeField] internal float _scaleFactor = 1.0f; 
         [Tooltip("Reduces identical resources. e.g. when identical meshes are found, only one will be imported.")]
         [SerializeField] internal DeduplicateOptions _deduplicateResources = DeduplicateOptions.None;
-        [SerializeField] internal DeduplicatedStatistics _deduplicatedStatistics;
-        
+
         [SerializeField] internal int _maximumLod = 300;
         [SerializeField] internal bool _readWriteEnabled = true;
         
@@ -125,26 +125,17 @@ namespace UnityGLTF
         [SerializeField] internal bool _useSceneNameIdentifier = false;
         [Tooltip("Compress textures after import using the platform default settings. If you need more control, use a .gltf file instead.")]
         [SerializeField] internal GLTFImporterTextureCompressionQuality _textureCompression = GLTFImporterTextureCompressionQuality.None;
-        [SerializeField, Multiline] internal string _gltfAsset = default;
         // for humanoid importer
         [SerializeField] internal bool m_OptimizeGameObjects = false;
 
-        // asset remapping
-        [SerializeField] internal Material[] m_Materials = new Material[0];
-        [SerializeField] internal Texture[] m_Textures = new Texture[0];
-        [SerializeField] internal bool m_HasSceneData = true;
-        [SerializeField] internal bool m_HasAnimationData = true;
-        [SerializeField] internal bool m_HasMaterialData = true;
-        [SerializeField] internal bool m_HasTextureData = true;
         [SerializeField] [NonReorderable] private AnimationClipImportInfo[] m_Animations = new AnimationClipImportInfo[0];
         internal const string AnimationsPropertyName = nameof(m_Animations);
 
-		// Import messages (extensions, warnings, errors, ...)
-        [NonReorderable] [SerializeField] internal List<ExtensionInfo> _extensions;
-        [NonReorderable] [SerializeField] private List<TextureInfo> _textures;
-        [SerializeField] internal string _mainAssetIdentifier;
+        [SerializeField] private RemapsInFile m_RemapsInFile = new RemapsInFile();
+        internal RemapsInFile RemapsInFile => m_RemapsInFile;
 
-        internal List<TextureInfo> Textures => _textures;
+        // Import results (imported materials and textures, extensions in the file, ...) are not stored here but in the
+        // GLTFImportInfo sub-asset: these fields are import settings and end up in the .meta file (#919).
 
         // Import Plugin Overrides
         [SerializeField] // but we can serialize their YAML representations as string
@@ -214,9 +205,8 @@ namespace UnityGLTF
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(PBRGraphMap.PBRGraphGuid));
 	        dependencies.Add(AssetDatabase.GUIDToAssetPath(UnlitGraphMap.UnlitGraphGuid));
 
-	        // Remap targets (e.g. materials from a material library glTF) have to be imported first (#914, #919).
-	        // WORKAROUND: reads the .meta file as text, see ExternalObjectDependencies.
-	        dependencies.AddRange(ExternalObjectDependencies.FromMetaFile(path));
+	        // Remap targets (e.g. materials from a material library glTF) can't be added here: this only gets the path,
+	        // and Unity has no API to read the remaps of a path. See DeclareRemapDependencies.
 
 	        // only supported glTF for now - would be harder to check for external references in glb assets.
 	        if (!path.ToLowerInvariant().EndsWith(".gltf"))
@@ -274,10 +264,68 @@ namespace UnityGLTF
 	        return dependencies.Distinct().ToArray();
         }
 
+        /// <summary>
+        /// Re-import when a remap target (e.g. a material from a material library glTF) is imported or changes (#914).
+        /// Unity doesn't do this on its own for the remaps of a ScriptedImporter, and it doesn't import the remap targets
+        /// first either: a file can be imported before its remap targets, without the remapped materials, and is then
+        /// imported again after them.
+        /// </summary>
+        private void DeclareRemapDependencies(AssetImportContext ctx)
+        {
+	        foreach (var path in GetRemapTargetPaths(this))
+	        {
+		        // Native assets such as materials have no import artifact. Unity logs "dependency isn't used and
+		        // therefore not registered" for an artifact dependency on them, so they depend on the source.
+		        if (IsNativeAsset(path)) ctx.DependsOnSourceAsset(path);
+		        else ctx.DependsOnArtifact(path);
+	        }
+        }
+
+        /// <summary>
+        /// By extension, not by AssetImporter.GetAtPath: the target may not be imported yet, and getting the importer
+        /// of an asset that is scheduled for reimport during a refresh logs an error. Anything else (e.g. a material
+        /// library glTF) keeps the artifact dependency, which is what orders the imports.
+        /// </summary>
+        private static bool IsNativeAsset(string path)
+        {
+	        var extension = Path.GetExtension(path);
+	        return string.Equals(extension, ".mat", StringComparison.OrdinalIgnoreCase) ||
+	               string.Equals(extension, ".asset", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Asset paths of the remap targets of the importer, without remaps to the asset itself or to built-in resources.
+        /// Doesn't load the targets.
+        /// </summary>
+        internal static List<string> GetRemapTargetPaths(AssetImporter importer)
+        {
+	        var paths = new List<string>();
+	        using (var serializedImporter = new SerializedObject(importer))
+	        {
+		        var externalObjects = serializedImporter.FindProperty("m_ExternalObjects");
+		        if (externalObjects == null) return paths;
+		        for (var i = 0; i < externalObjects.arraySize; i++)
+		        {
+			        var target = externalObjects.GetArrayElementAtIndex(i).FindPropertyRelative("second");
+			        if (target == null) continue;
+#if UNITY_6000_4_OR_NEWER
+			        var path = AssetDatabase.GetAssetPath(target.objectReferenceEntityIdValue);
+#else
+			        var path = AssetDatabase.GetAssetPath(target.objectReferenceInstanceIDValue);
+#endif
+			        if (string.IsNullOrEmpty(path)) continue;
+			        // a remap to the asset itself, or to a built-in resource such as "Resources/unity_builtin_extra", is no import dependency
+			        if (string.Equals(path, importer.assetPath, StringComparison.OrdinalIgnoreCase)) continue;
+			        if (!path.StartsWith("Assets/", StringComparison.Ordinal) && !path.StartsWith("Packages/", StringComparison.Ordinal)) continue;
+			        if (!paths.Contains(path)) paths.Add(path);
+		        }
+	        }
+	        return paths;
+        }
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
-	        // re-import when a remap target changes (#914, #919)
-	        ExternalObjectDependencies.DeclareForImport(ctx, this);
+	        DeclareRemapDependencies(ctx);
 
 	        var settings = GLTFSettings.GetDefaultSettings();
 	        
@@ -300,7 +348,12 @@ namespace UnityGLTF
 
 	        var uniqueNames = new Dictionary<int, int>(100);
 	        uniqueNames.Add("main asset".GetHashCode(), 0);
+	        uniqueNames.Add(GLTFImportInfo.Identifier.GetHashCode(), 0);
             EnsureShadersAreLoaded();
+
+	        // When the import fails, Unity discards the whole import result, including this.
+	        var importInfo = GLTFImportInfo.Create();
+	        ctx.AddObjectToAsset(GLTFImportInfo.Identifier, importInfo);
 
 #if UNITY_2020_2_OR_NEWER && !UNITY_2021_3_OR_NEWER
 	        // We don't need this custom dependency in 2021.3 and later, because there we always use ShaderGraph.
@@ -337,7 +390,7 @@ namespace UnityGLTF
 
             try
             {
-                CreateGLTFScene(context, out gltfScene, out animations, out var importer);
+                CreateGLTFScene(context, importInfo, out gltfScene, out animations, out var importer);
 
                 if (gltfScene)
                 {
@@ -561,7 +614,7 @@ namespace UnityGLTF
                 // Collect the per-clip import settings and apply them to the clips.
                 // This has to happen before the clips are added to the asset so that the
                 // resulting sub assets already contain the final clip settings.
-                m_HasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
+                importInfo.hasAnimationData = importer.Root.Animations != null && importer.Root.Animations.Count > 0;
                 m_Animations = CollectAnimationClipImportInfo(animations);
                 ApplyAnimationClipImportInfo(animations);
 
@@ -597,7 +650,7 @@ namespace UnityGLTF
 					}
 					// Only create a generic avatar when it's used: for the file's own animations, or for root motion
 					// with clips from other files. Otherwise every static model would get an unused avatar sub-asset.
-					else if (_importAnimations == AnimationMethod.Mecanim && (m_HasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))
+					else if (_importAnimations == AnimationMethod.Mecanim && (importInfo.hasAnimationData || !string.IsNullOrEmpty(_nonHumanoidRootNodeName)))
 					{
 						avatar = NonHumanoidSetup.AddAvatarToGameObject(gltfScene, _nonHumanoidRootNodeName, out var rootNodeFound);
 						if (!rootNodeFound)
@@ -614,9 +667,9 @@ namespace UnityGLTF
 
                 // These describe what the glTF file contains (they drive which inspector tabs are shown),
                 // so they must be updated whether or not materials are imported.
-                m_HasSceneData = gltfScene;
-                m_HasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
-                m_HasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
+                importInfo.hasSceneData = gltfScene;
+                importInfo.hasMaterialData = importer.Root.Materials != null && importer.Root.Materials.Count > 0;
+                importInfo.hasTextureData = importer.Root.Textures != null && importer.Root.Textures.Count > 0;
 
                 if (_importMaterials)
                 {
@@ -660,20 +713,35 @@ namespace UnityGLTF
                     }
 
                     // apply material remap
+                    var materialsByName = RemapsInFile.ByName(materials);
+                    var remappedMaterials = new HashSet<Material>();
                     foreach (var r in renderers)
                     {
-	                    // remap materials to external objects
 	                    var m = r.sharedMaterials;
 	                    for (var i = 0; i < m.Length; i++)
 	                    {
 		                    var mat = m[i];
 		                    if (mat)
 		                    {
+			                    // remap to another material of this file
+			                    var targetInFile = m_RemapsInFile.Resolve(mat, materialsByName);
+			                    if (targetInFile)
+			                    {
+				                    m[i] = targetInFile;
+				                    remappedMaterials.Add(mat);
+				                    continue;
+			                    }
+
+			                    // remap materials to external objects
 			                    var si = new SourceAssetIdentifier(mat);
 			                    if (map.TryGetValue(si, out var value))
 			                    {
 				                    if (!value) map.Remove(si);
-				                    else m[i] = value as Material;
+				                    else
+				                    {
+					                    m[i] = value as Material;
+					                    remappedMaterials.Add(mat);
+				                    }
 			                    }
 		                    }
 	                    }
@@ -746,6 +814,25 @@ namespace UnityGLTF
 		                textures.Clear();
 	                }
 
+	                // remap textures to other textures of this file (remaps to other assets are done when loading the textures)
+	                var remappedTextures = new HashSet<Texture>();
+	                if (m_RemapsInFile.Count(typeof(Texture)) > 0)
+	                {
+		                var texturesByName = RemapsInFile.ByName(textures);
+		                foreach (var mat in materials)
+		                {
+			                if (!mat) continue;
+			                foreach (var property in mat.GetTexturePropertyNameIDs())
+			                {
+				                if (!(mat.GetTexture(property) is Texture2D tex) || !textures.Contains(tex)) continue;
+				                var target = m_RemapsInFile.Resolve(tex, texturesByName);
+				                if (!target) continue;
+				                mat.SetTexture(property, target);
+				                remappedTextures.Add(tex);
+			                }
+		                }
+	                }
+
                     /*
                     // texture asset remapping
                     foreach (var entry in texMaterialMap)
@@ -789,6 +876,8 @@ namespace UnityGLTF
 	                        {
 		                        if (invalidTextures.Contains(tex))
 		                            tex.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+		                        else if (remappedTextures.Contains(tex))
+		                            tex.hideFlags = HideFlags.HideInHierarchy;
 		                        
 		                        if (_textureCompression != GLTFImporterTextureCompressionQuality.None)
 		                        {
@@ -820,15 +909,15 @@ namespace UnityGLTF
 	                        if (!mat) continue;
 	                        // ensure materials that are overridden aren't shown in the hierarchy.
 	                        var si = new SourceAssetIdentifier(mat);
-	                        if (map.TryGetValue(si, out var remappedMaterial) && remappedMaterial)
+	                        if (remappedMaterials.Contains(mat) || (map.TryGetValue(si, out var remappedMaterial) && remappedMaterial))
 		                        mat.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
 	                        ctx.AddObjectToAsset(GetUniqueName(mat.name), mat);
                         }
                     }
 
-                    m_Materials = materials.ToArray();
-                    m_Textures = textures.ToArray();
+                    importInfo.materials = materials.ToArray();
+                    importInfo.textures = textures.ToArray();
 
 #if !UNITY_2022_1_OR_NEWER
 			        AssetDatabase.SaveAssets();
@@ -848,10 +937,8 @@ namespace UnityGLTF
                         rend.sharedMaterials = defaultMat;
                     }
 
-                    // Clear potential stale data from previous imports
-                    m_Materials = Array.Empty<Material>();
-                    m_Textures = Array.Empty<Texture>();
-                    _textures = new List<TextureInfo>();
+                    // no materials and textures are imported
+                    importInfo.textureInfos.Clear();
                 }
             }
             catch (Exception e)
@@ -867,14 +954,14 @@ namespace UnityGLTF
 		        if (!_useSceneNameIdentifier)
 		        {
 			        // Set main asset
-			        _mainAssetIdentifier = "main asset";
-			        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
+			        importInfo.mainAssetIdentifier = "main asset";
+			        ctx.AddObjectToAsset(importInfo.mainAssetIdentifier, gltfScene);
 		        }
 		        else
 		        {
 			        // This will be a breaking change, but would be aligned to the import naming from glTFast - allows switching back and forth between importers.
-			        _mainAssetIdentifier = $"scenes/{gltfScene.name}";
-			        ctx.AddObjectToAsset(_mainAssetIdentifier, gltfScene);
+			        importInfo.mainAssetIdentifier = $"scenes/{gltfScene.name}";
+			        ctx.AddObjectToAsset(importInfo.mainAssetIdentifier, gltfScene);
 		        }
 	        }
 
@@ -897,16 +984,16 @@ namespace UnityGLTF
 	        {
 				ctx.SetMainObject(gltfScene);
 	        }
-	        else if (m_Materials.Length > 0)
+	        else if (importInfo.materials.Length > 0)
 	        {
 		        // Create a "MaterialLibrary" asset that will hold one or more materials imported from glTF
 		        var library = ScriptableObject.CreateInstance<MaterialLibrary>();
 		        ctx.AddObjectToAsset("material library", library);
 		        ctx.SetMainObject(library);
 		        /*
-		        if (m_Materials.Length == 1)
+		        if (importInfo.materials.Length == 1)
 		        {
-			        ctx.SetMainObject(m_Materials[0]);
+			        ctx.SetMainObject(importInfo.materials[0]);
 		        }
 		        */
 	        }
@@ -929,7 +1016,7 @@ namespace UnityGLTF
 		        plugin.OnAfterImport();
 	        
 	        // run texture verification and warn about wrong configuration
-	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(this))
+	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(importInfo.textureInfos))
 		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.", this);
 
 	        if (context.SceneImporter != null)
@@ -1043,7 +1130,42 @@ namespace UnityGLTF
 #endif
 #endif
 
-	    private void CreateGLTFScene(GLTFImportContext context, out GameObject scene,
+	    private static List<ExtensionInfo> GetExtensions(GLTF.Schema.GLTFRoot gltfRoot)
+	    {
+		    if (gltfRoot?.ExtensionsUsed == null) return new List<ExtensionInfo>();
+		    return gltfRoot.ExtensionsUsed
+			    .Select(x => new ExtensionInfo()
+			    {
+				    name = x,
+				    supported = true,
+				    used = true,
+				    required = gltfRoot.ExtensionsRequired?.Contains(x) ?? false,
+			    })
+			    .ToList();
+	    }
+
+	    /// <summary>
+	    /// The extensions in the glTF file at <paramref name="assetPath"/>. For the inspector when the import failed:
+	    /// Unity discards the import result then, so there is no <see cref="GLTFImportInfo"/>.
+	    /// </summary>
+	    internal static List<ExtensionInfo> ReadExtensions(string assetPath)
+	    {
+		    try
+		    {
+			    using (var stream = File.OpenRead(LongPath.ToLongPath(assetPath)))
+			    {
+				    GLTFParser.ParseJson(stream, out var gltfRoot);
+				    return GetExtensions(gltfRoot);
+			    }
+		    }
+		    catch (Exception)
+		    {
+			    // the file can't be read or parsed, the import error says why
+			    return new List<ExtensionInfo>();
+		    }
+	    }
+
+	    private void CreateGLTFScene(GLTFImportContext context, GLTFImportInfo importInfo, out GameObject scene,
 		    out AnimationClip[] animationClips, out GLTFSceneImporter importer)
 	    {
 		    var projectFilePath = context.AssetContext.assetPath;
@@ -1070,24 +1192,7 @@ namespace UnityGLTF
 		    {
 			    GLTFParser.ParseJson(stream, out var gltfRoot);
 			    
-			    // Early writing of _extensions – if there are any import errors
-			    // we want to be able to show proper warnings/errors for them.
-			    if (gltfRoot.ExtensionsUsed != null)
-			    {
-				    _extensions = gltfRoot.ExtensionsUsed
-					    .Select(x => new ExtensionInfo()
-					    {
-						    name = x,
-						    supported = true,
-						    used = true,
-						    required = gltfRoot.ExtensionsRequired?.Contains(x) ?? false,
-					    })
-					    .ToList();
-			    }
-			    else
-			    {
-				    _extensions = new List<ExtensionInfo>();
-			    }
+			    importInfo.extensions = GetExtensions(gltfRoot);
 			    
 			    stream.Position = 0; // Make sure the read position is changed back to the beginning of the file
 			    var loader = new GLTFSceneImporter(gltfRoot, stream, importOptions);
@@ -1111,15 +1216,15 @@ namespace UnityGLTF
 			    // Need to call with RunSync, otherwise the draco loader will freeze the editor
 			    AsyncHelpers.RunSync(() => loader.LoadSceneAsync());
 
-			    _textures = loader.TextureCache
+			    importInfo.textureInfos = loader.TextureCache
 				    .Where(x => x != null)
 				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear, shouldBeNormalMap = x.IsNormal })
 				    .ToList();
 
 			    scene = loader.LastLoadedScene;
 			    animationClips = loader.CreatedAnimationClips;
-			    _deduplicatedStatistics = loader.LastImportDeduplicationStatistics;
-			    _gltfAsset = loader.Root.Asset?.ToString(true);
+			    importInfo.deduplicatedStatistics = loader.LastImportDeduplicationStatistics;
+			    importInfo.gltfAsset = loader.Root.Asset?.ToString(true);
 			    importer = loader;
 		    }
 	    }

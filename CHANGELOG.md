@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - fix: Canvas export plugin (experimental): compile errors when the `com.unity.ugui` package is not installed. Without it, the plugin now shows a warning and exports nothing
 - fix: obsolete `ShaderUtil.ShaderPropertyType` / `ShaderUtil.GetPropertyType` warnings in Unity 6.6
-- fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Remap targets are now declared as import dependencies up front, so they import first, and the import warns if they can't be read from the .meta file (#919, #920)
+- fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Import results (imported materials and textures, extensions in the file, ...) are no longer stored in the import settings (.meta file) but in a hidden sub-asset of the import. All glTF files are reimported once after the update (#919, #920)
+- fix: Asset Importer: remapping a material or texture to another material or texture of the same file didn't work and referenced the file's own sub-assets in the .meta file. These remaps are now stored by name. The importer inspector shows remaps whose target is missing and can remove them
 
 ## [2.25.0] - 2026-11-16
 - add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`

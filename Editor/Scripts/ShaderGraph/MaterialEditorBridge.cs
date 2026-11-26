@@ -50,7 +50,9 @@ namespace UnityGLTF
 			// Transform[] rootTransforms = null;
 			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
 			if (!importer) return;
-			var materialsToExport = importer.m_Materials.Where(x => x is Material).Cast<Material>().ToList();
+			var importInfo = GLTFImportInfo.Load(assetPath);
+			if (!importInfo) return;
+			var materialsToExport = importInfo.materials.Where(x => x is Material).Cast<Material>().ToList();
 
 			SaveAssetWithMaterials(assetPath, materialsToExport);
 		}
@@ -58,6 +60,8 @@ namespace UnityGLTF
 		internal static void SaveAssetWithMaterials(string assetPath, List<Material> materials)
 		{
 			var importer = AssetImporter.GetAtPath(assetPath) as GLTFImporter;
+			// the textures of the current import, before the file is written again
+			var importedTextures = GLTFImportInfo.Load(assetPath)?.textures ?? Array.Empty<Texture>();
 			var exporter = new GLTFSceneExporter((Transform[]) null, new ExportContext());
 			// load all materials from mainAsset
 
@@ -79,7 +83,6 @@ namespace UnityGLTF
 			// We want to always have default paths in the file, and remapping is done on the Unity side to a project specific path,
 			// to avoid breaking references all the time when paths change.
 			var exportedTextures = exporter.GetRoot().Textures;
-			var importedTextures = importer.m_Textures;
 			// If these don't match, we could only try by name... not ideal.
 			// They may not match due to different sampler settings etc.
 			if (exportedTextures?.Count == importedTextures.Length)
@@ -100,7 +103,8 @@ namespace UnityGLTF
 					// we should not remap if that is actually the same texture
 					if (imported == sourceTextureForExportedTexture) continue;
 
-					importer.AddRemap(new AssetImporter.SourceAssetIdentifier(imported), sourceTextureForExportedTexture);
+					// can also be another texture of the same file
+					importer.SetRemap(imported, sourceTextureForExportedTexture);
 				}
 				importer.SaveAndReimport();
 			}

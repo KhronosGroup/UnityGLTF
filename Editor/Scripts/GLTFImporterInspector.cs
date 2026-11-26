@@ -97,21 +97,71 @@ namespace UnityGLTF
 		Avatar avatar;
 		int selectedBoneGroupTab = 0;
 
+		private GLTFImportInfo _importInfo;
+		private bool _importInfoLoaded;
+		private SerializedObject _serializedImportInfo;
+		private List<GLTFImporter.ExtensionInfo> _extensionsOfFailedImport;
+
+		/// <summary>The extensions in the file, also when the import failed.</summary>
+		private List<GLTFImporter.ExtensionInfo> Extensions
+		{
+			get
+			{
+				if (ImportInfo) return ImportInfo.extensions;
+				if (_extensionsOfFailedImport == null && importer)
+					_extensionsOfFailedImport = GLTFImporter.ReadExtensions(importer.assetPath);
+				return _extensionsOfFailedImport;
+			}
+		}
+
+		/// <summary>
+		/// The import results of the (first) selected asset, see <see cref="GLTFImportInfo"/>. Null when the asset
+		/// wasn't imported (yet) or the import failed. Loaded again when the asset was reimported.
+		/// </summary>
+		private GLTFImportInfo ImportInfo
+		{
+			get
+			{
+				// a reimport replaces the sub-asset, the old one is destroyed then
+				var destroyed = !ReferenceEquals(_importInfo, null) && !_importInfo;
+				if ((!_importInfoLoaded || destroyed) && importer)
+				{
+					_importInfo = GLTFImportInfo.Load(importer.assetPath);
+					_importInfoLoaded = true;
+					_serializedImportInfo = null;
+					_extensionsOfFailedImport = null;
+				}
+				return _importInfo;
+			}
+		}
+
+		private SerializedObject SerializedImportInfo
+		{
+			get
+			{
+				var importInfo = ImportInfo;
+				if (!importInfo) return null;
+				if (_serializedImportInfo == null || _serializedImportInfo.targetObject != importInfo)
+					_serializedImportInfo = new SerializedObject(importInfo);
+				return _serializedImportInfo;
+			}
+		}
+
 		public override void OnEnable()
 		{
 			if (!this) return;
 
 			importer = target as GLTFImporter;
+			_importInfoLoaded = false;
 
-			var m_HasSceneData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasSceneData));
-			if (m_HasSceneData.boolValue)
+			// without import info (not imported yet, or the import failed) all tabs are shown
+			var importInfo = ImportInfo;
+			if (!importInfo || importInfo.hasSceneData)
 				AddTab(new GLTFAssetImporterTab(this, "Model", ModelInspectorGUI));
 
 			AddTab(new GLTFAssetImporterTab(this, "Animation", AnimationInspectorGUI));
 
-			var m_HasMaterialData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasMaterialData));
-			var m_HasTextureData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasTextureData));
-			if (m_HasMaterialData.boolValue || m_HasTextureData.boolValue)
+			if (!importInfo || importInfo.hasMaterialData || importInfo.hasTextureData)
 				AddTab(new GLTFAssetImporterTab(this, "Materials", MaterialInspectorGUI));
 
 			AddTab(new GLTFAssetImporterTab(this, "Extensions", ExtensionInspectorGUI));
@@ -161,13 +211,13 @@ namespace UnityGLTF
 
 		private void TextureWarningsGUI()
 		{
-			if (!importer)	return;
-			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(importer))
+			if (!importer || !ImportInfo) return;
+			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(ImportInfo.textureInfos))
 			{
 				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
 				if (GUILayout.Button("Fix All"))
 				{
-					GLTFImporterHelper.FixTextureImportSettings(importer);
+					GLTFImporterHelper.FixTextureImportSettings(ImportInfo.textureInfos);
 				}
 			}
 		}
@@ -188,9 +238,9 @@ namespace UnityGLTF
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._scaleFactor)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._importCamera)));
 			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._deduplicateResources)));
-			if (importer._deduplicatedStatistics != null && importer._deduplicateResources != DeduplicateOptions.None)
+			var stats = ImportInfo ? ImportInfo.deduplicatedStatistics : null;
+			if (stats != null && importer._deduplicateResources != DeduplicateOptions.None)
 			{
-				var stats = importer._deduplicatedStatistics;
 				var meshText = importer._deduplicateResources.HasFlag(DeduplicateOptions.Meshes)
 					? $"Removed {stats.MeshesRemoved} Meshes ({stats.meshCountAfter}/{stats.meshCountBefore}). "
 					: "";
@@ -241,8 +291,7 @@ namespace UnityGLTF
 			EditorGUILayout.Separator();
 
 			// Show texture compression UI if there are any imported textures 
-			var importedTextures = serializedObject.FindProperty("m_Textures");
-			if (importedTextures.arraySize > 0)
+			if (ImportInfo && ImportInfo.textures.Length > 0)
 			{
 				EditorGUILayout.LabelField("Textures", EditorStyles.boldLabel);
 				EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._texturesReadWriteEnabled)));
@@ -410,7 +459,8 @@ namespace UnityGLTF
 		{
 			if (!importer) return;
 
-			var hasAnimationData = serializedObject.FindProperty(nameof(GLTFImporter.m_HasAnimationData)).boolValue;
+			// without import info (not imported yet, or the import failed) the animation settings are shown
+			var hasAnimationData = !ImportInfo || ImportInfo.hasAnimationData;
 
 			if (!hasAnimationData)
 			{
@@ -548,10 +598,10 @@ namespace UnityGLTF
 				EditorGUI.EndDisabledGroup();
 				EditorGUI.indentLevel--;
 			}
-			var importedMaterials = serializedObject.FindProperty("m_Materials");
-			if (importedMaterials.arraySize > 0)
+			var importInfo = ImportInfo;
+			if (importInfo && importInfo.materials.Length > 0)
 			{
-				RemappingUI<Material>(importedMaterials, "Materials", ".mat");
+				RemappingUI<Material>(importInfo.materials, "Materials", ".mat");
 			}
 
 			// There's a bunch of known edge cases with texture remapping that can go wrong,
@@ -559,10 +609,9 @@ namespace UnityGLTF
 			var current = EnableTextureRemapping;
 			var val = EditorGUILayout.Toggle(RemapTexturesToggleContent, EnableTextureRemapping);
 			if (val != current) EnableTextureRemapping = val;
-			var importedTextures = serializedObject.FindProperty("m_Textures");
-			if (EnableTextureRemapping && importedTextures.arraySize > 0)
+			if (EnableTextureRemapping && importInfo && importInfo.textures.Length > 0)
 			{
-				RemappingUI<Texture>(importedTextures, "Textures", ".asset");
+				RemappingUI<Texture>(importInfo.textures, "Textures", ".asset");
 			}
 
 			var identifierProp = serializedObject.FindProperty(nameof(GLTFImporter._useSceneNameIdentifier));
@@ -593,16 +642,16 @@ namespace UnityGLTF
 			EditorGUILayout.Separator();
 		}
 
-		private void RemappingUI<T>(SerializedProperty importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
+		private void RemappingUI<T>(T[] importedData, string subDirectoryName, string fileExtension) where T: UnityEngine.Object
 		{
 			// extract and remap materials
-			if (importedData != null && importedData.serializedObject != null)
+			if (importedData != null)
 			{
 				EditorGUI.indentLevel++;
 
 				var externalObjectMap = importer.GetExternalObjectMap();
 				// TODO this also counts old remaps that are not used anymore
-				var remapCount = externalObjectMap.Values.Count(x => x is T);
+				var remapCount = externalObjectMap.Values.Count(x => x is T) + importer.RemapsInFile.Count(typeof(T));
 
 				void ExtractAssets(T[] subAssets, bool importImmediately)
 				{
@@ -620,7 +669,8 @@ namespace UnityGLTF
 						var clone = Instantiate(subAsset);
 						AssetDatabase.CreateAsset(clone, destinationPath);
 
-						assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
+						if (assetImporter is GLTFImporter gltfImporter) gltfImporter.SetRemap(subAsset, clone);
+						else assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
 					}
 
 					if (importImmediately)
@@ -644,7 +694,8 @@ namespace UnityGLTF
 					AssetDatabase.CreateAsset(clone, destinationPath);
 
 					var assetImporter = AssetImporter.GetAtPath(assetPath);
-					assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
+					if (assetImporter is GLTFImporter gltfImporter) gltfImporter.SetRemap(subAsset, clone);
+					else assetImporter.AddRemap(new AssetImporter.SourceAssetIdentifier(subAsset), clone);
 
 					if (importImmediately)
 					{
@@ -653,8 +704,19 @@ namespace UnityGLTF
 					}
 				}
 
+				var remapsWithMissingTarget = importer.GetRemapsWithMissingTarget(typeof(T));
+				if (remapsWithMissingTarget.Count > 0)
+				{
+					EditorGUILayout.HelpBox($"The remap targets of {string.Join(", ", remapsWithMissingTarget.Select(x => x.name))} are missing. " +
+					                        "They were deleted, or they are " + subDirectoryName.ToLowerInvariant() + " of this file remapped with an older UnityGLTF version, which doesn't work. " +
+					                        "Remove these remaps and remap them again.", MessageType.Warning);
+					if (GUILayout.Button("Remove remaps with missing target"))
+						foreach (var remap in remapsWithMissingTarget)
+							importer.RemoveRemap(remap);
+				}
+
 				string remapFoldoutKey = nameof(GLTFImporterInspector) + "_Remap_" + subDirectoryName + "_Foldout";
-				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remapped " + subDirectoryName + " (" + remapCount + " / " + importedData.arraySize + ")");
+				var remapFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(SessionState.GetBool(remapFoldoutKey, false), "Remapped " + subDirectoryName + " (" + remapCount + " / " + importedData.Length + ")");
 				SessionState.SetBool(remapFoldoutKey, remapFoldout);
 				if (remapFoldout)
 				{
@@ -664,29 +726,14 @@ namespace UnityGLTF
 					{
 						if (GUILayout.Button("Restore all " + subDirectoryName))
 						{
-							for (var i = 0; i < importedData.arraySize; i++)
-							{
-								var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
-								if (!mat) continue;
-								importer.RemoveRemap(new AssetImporter.SourceAssetIdentifier(mat));
-							}
-
-							// also remove all old remaps
-							var oldRemaps = externalObjectMap.Where(x => x.Value is T).ToList();
-							foreach (var oldRemap in oldRemaps)
-							{
-								importer.RemoveRemap(oldRemap.Key);
-							}
+							// also removes old remaps of sub-assets that don't exist anymore
+							importer.RemoveAllRemaps(typeof(T));
 						}
 					}
 
 					if (typeof(T) == typeof(Material) && GUILayout.Button("Extract all " + subDirectoryName))
 					{
-						var materials = new T[importedData.arraySize];
-						for (var i = 0; i < importedData.arraySize; i++)
-							materials[i] = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
-
-						var extract = materials.Where(m => m != null).ToArray();
+						var extract = importedData.Where(m => m != null).ToArray();
 						AssetDatabase.StartAssetEditing();
 						ExtractAssets(extract, false);
 						AssetDatabase.StopAssetEditing();
@@ -700,22 +747,23 @@ namespace UnityGLTF
 					EditorGUILayout.Space();
 
 
-					for (var i = 0; i < importedData.arraySize; i++)
+					for (var i = 0; i < importedData.Length; i++)
 					{
-						var mat = importedData.GetArrayElementAtIndex(i).objectReferenceValue as T;
+						var mat = importedData[i];
 						if (!mat) continue;
 						var id = new AssetImporter.SourceAssetIdentifier(mat);
 						externalObjectMap.TryGetValue(id, out var remap);
+						// a remap to another sub-asset of this file is stored by name
+						var targetNameInFile = remap ? null : importer.RemapsInFile.GetTargetName(mat);
+						if (targetNameInFile != null)
+							remap = Array.Find(importedData, x => x && x.name == targetNameInFile);
 						EditorGUILayout.BeginHorizontal();
 						// EditorGUILayout.ObjectField(/*mat.name,*/ mat, typeof(Material), false);
 						EditorGUI.BeginChangeCheck();
 						var newObj = EditorGUILayout.ObjectField(mat.name, remap, typeof(T), false);
 						if (EditorGUI.EndChangeCheck())
 						{
-							if (newObj && newObj != mat)
-								importer.AddRemap(id, newObj);
-							else
-								importer.RemoveRemap(id);
+							importer.SetRemap(mat, newObj);
 						}
 
 						if (!remap)
@@ -730,7 +778,7 @@ namespace UnityGLTF
 						{
 							if (GUILayout.Button("Restore", GUILayout.Width(60)))
 							{
-								importer.RemoveRemap(id);
+								importer.SetRemap(mat, null);
 #if UNITY_2022_2_OR_NEWER
 								SaveChanges();
 #else
@@ -755,9 +803,12 @@ namespace UnityGLTF
 		private void AssetInfoInspectorGUI()
 		{
 			if (!importer) return;
-			var assetProp = serializedObject.FindProperty(nameof(GLTFImporter._gltfAsset));
-			if (assetProp == null)
+			var importInfo = ImportInfo;
+			if (!importInfo)
+			{
+				EditorGUILayout.HelpBox("No import results, the asset wasn't imported successfully.", MessageType.None);
 				return;
+			}
 
 			if (_richTextWordWrap == null)
 			{
@@ -766,28 +817,41 @@ namespace UnityGLTF
 				style.wordWrap = true;
 				_richTextWordWrap = style;
 			}
-			
-			if (string.IsNullOrEmpty(importer._gltfAsset))
+
+			if (string.IsNullOrEmpty(importInfo.gltfAsset))
 			{
 				EditorGUILayout.LabelField("<i>No asset information included in file</i>", _richTextWordWrap);
 				return;
 			}
-			
+
 			EditorGUILayout.Space();
-			var rect = GUILayoutUtility.GetRect(new GUIContent(importer._gltfAsset), _richTextWordWrap);
-			EditorGUI.SelectableLabel(rect, importer._gltfAsset, _richTextWordWrap);
-			
+			var rect = GUILayoutUtility.GetRect(new GUIContent(importInfo.gltfAsset), _richTextWordWrap);
+			EditorGUI.SelectableLabel(rect, importInfo.gltfAsset, _richTextWordWrap);
+
 			EditorGUILayout.Space();
 			EditorGUI.BeginDisabledGroup(true);
-			var mainAssetIdentifierProp = serializedObject.FindProperty(nameof(GLTFImporter._mainAssetIdentifier));
-			EditorGUILayout.PropertyField(mainAssetIdentifierProp);
+			EditorGUILayout.TextField("Main Asset Identifier", importInfo.mainAssetIdentifier);
+			EditorGUI.EndDisabledGroup();
 		}
 
 		private void ExtensionInspectorGUI()
 		{
 			if (!importer) return;
 
-			EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(GLTFImporter._extensions)), new GUIContent("Extensions in file"));
+			var serializedImportInfo = SerializedImportInfo;
+			EditorGUI.BeginDisabledGroup(true);
+			if (serializedImportInfo != null)
+			{
+				serializedImportInfo.Update();
+				EditorGUILayout.PropertyField(serializedImportInfo.FindProperty(nameof(GLTFImportInfo.extensions)), new GUIContent("Extensions in file"));
+			}
+			else
+			{
+				// the import failed, so the extensions come from the file
+				EditorGUILayout.LabelField("Extensions in file", EditorStyles.boldLabel);
+				foreach (var extension in Extensions ?? new List<GLTFImporter.ExtensionInfo>())
+					EditorGUILayout.LabelField(extension.name, extension.required ? "required" : "");
+			}
 			EditorGUI.EndDisabledGroup();
 
 			// TODO add list of supported extensions and links to docs
@@ -859,7 +923,7 @@ namespace UnityGLTF
 				EditorGUILayout.EndHorizontal();
 				// This assumes that the display name of a Plugin matches what extension it operates on.
 				// It's not correct for Plugins that operate on multiple extensions, or none at all.
-				if (hasWarning && importer._extensions?.Find(x => x.name == plugin.DisplayName) != null)
+				if (hasWarning && Extensions?.Find(x => x.name == plugin.DisplayName) != null)
 				{
 					EditorGUILayout.HelpBox(plugin.Warning, MessageType.Warning);
 					editorCache.TryGetValue(plugin.GetType(), out var editor);
@@ -1053,7 +1117,13 @@ namespace UnityGLTF
 	{
 		public static bool TextureImportSettingsAreCorrect(GLTFImporter importer)
 		{
-			return importer.Textures.All(x =>
+			return !importer || TextureImportSettingsAreCorrect(GLTFImportInfo.Load(importer.assetPath)?.textureInfos);
+		}
+
+		internal static bool TextureImportSettingsAreCorrect(List<GLTFImporter.TextureInfo> textureInfos)
+		{
+			if (textureInfos == null) return true;
+			return textureInfos.All(x =>
 			{
 				if (x.texture && AssetDatabase.Contains(x.texture))
 				{
@@ -1084,8 +1154,15 @@ namespace UnityGLTF
 
 		public static void FixTextureImportSettings(GLTFImporter importer)
 		{
+			if (!importer) return;
+			FixTextureImportSettings(GLTFImportInfo.Load(importer.assetPath)?.textureInfos);
+		}
+
+		internal static void FixTextureImportSettings(List<GLTFImporter.TextureInfo> textureInfos)
+		{
+			if (textureInfos == null) return;
 			var haveStartedAssetEditing = false;
-			foreach (var x in importer.Textures)
+			foreach (var x in textureInfos)
 			{
 				if (!x.texture) continue;
 				if (!AssetDatabase.Contains(x.texture))

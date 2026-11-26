@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityGLTF;
 
 /// <summary>
 /// A glTF whose material is remapped to a material imported from another glTF (e.g. a material library GLB).
-/// The remap target has to be imported first, so GLTFImporter.GatherDependenciesFromSourceFile reports it up front:
-/// on a clean import the remap was silently dropped (#914), and when the library changed while Unity was closed,
-/// the import failed with "Opening file VirtualArtifacts/Primary/...: file not found" (#919).
+/// Unity doesn't import the remap target first, so the user file can be imported before it and is imported again
+/// after it (DependsOnArtifact): on a clean import the remap was silently dropped (#914), and when the library changed
+/// while Unity was closed, the import failed with "Opening file VirtualArtifacts/Primary/...: file not found" (#919).
 /// Any error logged during an import fails the test.
 /// </summary>
 public class MaterialRemapImportTests
@@ -48,56 +48,10 @@ public class MaterialRemapImportTests
 	}
 
 	[Test]
-	public void MetaFile_ListsSameRemapTargetsAsImporter()
+	public void RemapTargetPaths_ContainLibrary()
 	{
-		var importer = AssetImporter.GetAtPath(userPath);
-		CollectionAssert.AreEqual(new[] { libraryPath }, ExternalObjectDependencies.FromImporter(importer));
-		CollectionAssert.AreEqual(new[] { libraryPath }, ExternalObjectDependencies.FromMetaFile(userPath));
-	}
-
-	[Test]
-	public void NotInMetaFile_ListsTargetsTheMetaFileScanMissed()
-	{
-		// the library's .meta has no remaps, like a .meta whose format the scan can't read anymore
-		CollectionAssert.AreEqual(new[] { libraryPath }, ExternalObjectDependencies.NotInMetaFile(new List<string> { libraryPath }, libraryPath));
-		CollectionAssert.IsEmpty(ExternalObjectDependencies.NotInMetaFile(ExternalObjectDependencies.FromImporter(AssetImporter.GetAtPath(userPath)), userPath));
-	}
-
-	/// <summary>
-	/// The importer warns when the .meta scan misses a remap target. Neither a file with a remap nor one without may warn.
-	/// </summary>
-	[Test]
-	public void Import_DoesNotWarnAboutMetaFile()
-	{
-		var warnings = new List<string>();
-		Application.LogCallback onLog = (message, stackTrace, type) =>
-		{
-			if (message.Contains(ExternalObjectDependencies.NotInMetaFileWarning)) warnings.Add(message);
-		};
-		Application.logMessageReceived += onLog;
-		try
-		{
-			AssetDatabase.ImportAsset(userPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
-			AssetDatabase.ImportAsset(libraryPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
-		}
-		finally
-		{
-			Application.logMessageReceived -= onLog;
-		}
-		CollectionAssert.IsEmpty(warnings);
-	}
-
-	/// <summary>
-	/// The import order comes from GatherDependenciesFromSourceFile, which Unity calls before the import.
-	/// The import tests below can't tell the order apart: without it, the DependsOnArtifact from OnImportAsset
-	/// imports the user file a second time after the library and the end result looks the same.
-	/// </summary>
-	[Test]
-	public void GatherDependencies_ContainsRemapTarget()
-	{
-		var gather = typeof(GLTFImporter).GetMethod("GatherDependenciesFromSourceFile", BindingFlags.Static | BindingFlags.NonPublic);
-		Assert.IsNotNull(gather, "GLTFImporter.GatherDependenciesFromSourceFile not found");
-		CollectionAssert.Contains((string[])gather.Invoke(null, new object[] { userPath }), libraryPath);
+		CollectionAssert.AreEqual(new[] { libraryPath }, GLTFImporter.GetRemapTargetPaths(AssetImporter.GetAtPath(userPath)));
+		CollectionAssert.IsEmpty(GLTFImporter.GetRemapTargetPaths(AssetImporter.GetAtPath(libraryPath)));
 	}
 
 	/// <summary>
@@ -155,6 +109,29 @@ public class MaterialRemapImportTests
 		AssertUsesLibraryMaterial(userPath, libraryPath);
 	}
 
+	/// <summary>
+	/// #919: import results such as the imported materials belong to the import result (GLTFImportInfo), not to the
+	/// import settings. References to the asset's own sub-assets in the .meta file made Unity load the artifact
+	/// while it was being replaced.
+	/// </summary>
+	[Test]
+	public void MetaFiles_DontReferenceOwnSubAssets()
+	{
+		// writes the import settings of the library to its .meta file (the user file's were written by the remap)
+		var libraryImporter = AssetImporter.GetAtPath(libraryPath);
+		EditorUtility.SetDirty(libraryImporter);
+		libraryImporter.SaveAndReimport();
+
+		foreach (var path in new[] { userPath, libraryPath })
+		{
+			var guid = AssetDatabase.AssetPathToGUID(path);
+			var meta = File.ReadAllText(path + ".meta");
+			// the only occurrence is the "guid:" line of the asset itself
+			var occurrences = (meta.Length - meta.Replace(guid, "").Length) / guid.Length;
+			Assert.AreEqual(1, occurrences, $"{path}.meta references the asset's own sub-assets:\n{meta}");
+		}
+	}
+
 	[Test]
 	public void RemapToBuiltinMaterial_ImportsWithoutDependency()
 	{
@@ -162,17 +139,283 @@ public class MaterialRemapImportTests
 		RemapUserMaterial(builtin);
 
 		Assert.AreEqual(builtin, AssetDatabase.LoadAssetAtPath<GameObject>(userPath).GetComponentInChildren<Renderer>().sharedMaterial);
-		CollectionAssert.IsEmpty(ExternalObjectDependencies.FromImporter(AssetImporter.GetAtPath(userPath)));
-		CollectionAssert.IsEmpty(ExternalObjectDependencies.FromMetaFile(userPath));
+		CollectionAssert.IsEmpty(GLTFImporter.GetRemapTargetPaths(AssetImporter.GetAtPath(userPath)));
 	}
 
-	private void RemapUserMaterial(Material target)
+	/// <summary>
+	/// A remap to a native material asset (.mat) has no import artifact to depend on. Declaring an artifact dependency
+	/// made Unity log "dependency isn't used and therefore not registered" on every import. Changing the material
+	/// still has to import the file again.
+	/// </summary>
+	[Test]
+	public void RemapToMaterialAsset_NoDependencyWarning_ReimportsWhenMaterialChanges()
 	{
-		var importer = AssetImporter.GetAtPath(userPath);
-		var source = new AssetImporter.SourceAssetIdentifier(LoadMaterial(userPath));
-		importer.RemoveRemap(source);
-		importer.AddRemap(source, target);
+		var materialPath = Folder + "/Remapped.mat";
+		var shader = Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit");
+		AssetDatabase.CreateAsset(new Material(shader) { color = Color.red }, materialPath);
+
+		AssertRemapTargetDependency(materialPath,
+			() => RemapUserMaterial(AssetDatabase.LoadAssetAtPath<Material>(materialPath)),
+			() =>
+			{
+				var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+				material.color = Color.green;
+				EditorUtility.SetDirty(material);
+				AssetDatabase.SaveAssets();
+			});
+		AssertUsesMaterialOf(userPath, materialPath);
+	}
+
+	/// <summary>
+	/// A remap to a texture is imported by the texture importer and has an import artifact, so the file depends on
+	/// that artifact. Changing the texture has to import the file again, without Unity's dependency warning.
+	/// </summary>
+	[Test]
+	public void RemapToTextureAsset_NoDependencyWarning_ReimportsWhenTextureChanges()
+	{
+		var texturePath = Folder + "/Remapped.png";
+		WriteTexture(texturePath, Color.red);
+		AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceSynchronousImport);
+		var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+		Assert.IsTrue(texture, "texture did not import");
+
+		AssertRemapTargetDependency(texturePath,
+			() =>
+			{
+				// by name: the file doesn't need to contain a texture to have one remapped
+				var importer = AssetImporter.GetAtPath(userPath);
+				importer.AddRemap(new AssetImporter.SourceAssetIdentifier(typeof(Texture), "RemappedTexture"), texture);
+				importer.SaveAndReimport();
+			},
+			() =>
+			{
+				WriteTexture(texturePath, Color.green);
+				AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceSynchronousImport);
+			});
+	}
+
+	private static void WriteTexture(string path, Color color)
+	{
+		var texture = new Texture2D(4, 4);
+		texture.SetPixels(Enumerable.Repeat(color, 16).ToArray());
+		File.WriteAllBytes(path, texture.EncodeToPNG());
+		UnityEngine.Object.DestroyImmediate(texture);
+	}
+
+	/// <summary>
+	/// Remaps the user file to the asset at <paramref name="targetPath"/> and checks that no "dependency isn't used"
+	/// warning is logged and that changing the target imports the user file again.
+	/// </summary>
+	private void AssertRemapTargetDependency(string targetPath, Action remap, Action changeTarget)
+	{
+		var warnings = new List<string>();
+		var userImports = 0;
+		void OnLog(string message, string stackTrace, LogType type)
+		{
+			if (message.IndexOf("dependency isn't used", StringComparison.Ordinal) >= 0) warnings.Add(message);
+		}
+		void OnImported(string path)
+		{
+			if (path == userPath) userImports++;
+		}
+
+		Application.logMessageReceived += OnLog;
+		ImportCountingPostprocessor.Imported += OnImported;
+		LogAssert.ignoreFailingMessages = true;
+		try
+		{
+			remap();
+			AssetDatabase.ImportAsset(userPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+			CollectionAssert.Contains(GLTFImporter.GetRemapTargetPaths(AssetImporter.GetAtPath(userPath)), targetPath);
+
+			userImports = 0;
+			changeTarget();
+			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+			Assert.Greater(userImports, 0, $"the file was not imported again after {targetPath} changed");
+		}
+		finally
+		{
+			Application.logMessageReceived -= OnLog;
+			ImportCountingPostprocessor.Imported -= OnImported;
+			LogAssert.ignoreFailingMessages = false;
+		}
+
+		CollectionAssert.IsEmpty(warnings);
+	}
+
+	/// <summary>
+	/// The user file uses the library's material and the library uses the user file's material, so both files
+	/// depend on each other (DependsOnArtifact). The imports have to settle instead of reimporting each other forever.
+	/// Unity logs "Circular import dependencies detected!" for these, which can't be avoided without dropping
+	/// a dependency (and then a remap can get lost on a clean import, #914).
+	/// </summary>
+	[Test]
+	public void CyclicRemaps_TwoFiles_ImportAndSettle()
+	{
+		using (var imports = new ImportCounter())
+		{
+			RemapMaterial(libraryPath, LoadMaterial(userPath));
+			AssertUsesMaterialOf(userPath, libraryPath);
+			AssertUsesMaterialOf(libraryPath, userPath);
+			imports.AssertSettled();
+
+			ChangeLibraryOnDisk();
+			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+			AssertUsesMaterialOf(userPath, libraryPath);
+			AssertUsesMaterialOf(libraryPath, userPath);
+			imports.AssertSettled();
+		}
+	}
+
+	/// <summary>
+	/// User file → library → third file → user file.
+	/// </summary>
+	[Test]
+	public void CyclicRemaps_ThreeFiles_ImportAndSettle()
+	{
+		var thirdPath = Folder + "/C_Third.glb";
+		File.WriteAllBytes(thirdPath, TriangleGlb("ThirdMaterial", new[] { 0f, 1f, 0f, 1f }));
+		AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
+		using (var imports = new ImportCounter())
+		{
+			RemapMaterial(libraryPath, LoadMaterial(thirdPath));
+			RemapMaterial(thirdPath, LoadMaterial(userPath));
+			AssertUsesMaterialOf(userPath, libraryPath);
+			AssertUsesMaterialOf(libraryPath, thirdPath);
+			AssertUsesMaterialOf(thirdPath, userPath);
+			imports.AssertSettled();
+
+			ChangeLibraryOnDisk();
+			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+			AssertUsesMaterialOf(userPath, libraryPath);
+			AssertUsesMaterialOf(libraryPath, thirdPath);
+			AssertUsesMaterialOf(thirdPath, userPath);
+			imports.AssertSettled();
+		}
+	}
+
+	/// <summary>
+	/// Both files of a cycle are new in the same refresh, as with a deleted Library folder (#914).
+	/// </summary>
+	[Test]
+	public void CyclicRemaps_FreshCopies_ImportedInOneRefresh_ImportAndSettle()
+	{
+		using (new ImportCounter())
+			RemapMaterial(libraryPath, LoadMaterial(userPath));
+
+		var copyFolder = Folder + "/FreshCopy";
+		Directory.CreateDirectory(copyFolder);
+		var userGuid = AssetDatabase.AssetPathToGUID(userPath);
+		var libraryGuid = AssetDatabase.AssetPathToGUID(libraryPath);
+		var newUserGuid = GUID.Generate().ToString();
+		var newLibraryGuid = GUID.Generate().ToString();
+		string RewriteGuids(string meta) => meta.Replace(userGuid, newUserGuid).Replace(libraryGuid, newLibraryGuid);
+		var copyUser = copyFolder + "/" + UserFile;
+		var copyLibrary = copyFolder + "/" + LibraryFile;
+		foreach (var (from, to) in new[] { (userPath, copyUser), (libraryPath, copyLibrary) })
+		{
+			File.Copy(from, to);
+			File.WriteAllText(to + ".meta", RewriteGuids(File.ReadAllText(from + ".meta")));
+		}
+
+		using (var imports = new ImportCounter())
+		{
+			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+			Assert.AreEqual(copyUser, AssetDatabase.GUIDToAssetPath(newUserGuid));
+			Assert.AreEqual(copyLibrary, AssetDatabase.GUIDToAssetPath(newLibraryGuid));
+			AssertUsesMaterialOf(copyUser, copyLibrary);
+			AssertUsesMaterialOf(copyLibrary, copyUser);
+			imports.AssertSettled();
+		}
+	}
+
+	/// <summary>
+	/// Counts the imports of the test files. Fails on Unity's warning about an import loop and on any error
+	/// except Unity's error about the circular dependencies.
+	/// </summary>
+	private sealed class ImportCounter : IDisposable
+	{
+		// a file in a cycle is imported again after each file it depends on, but not endlessly
+		private const int MaxImportsPerFile = 5;
+
+		private readonly Dictionary<string, int> counts = new Dictionary<string, int>();
+		private const string CircularDependencyError = "Circular import dependencies detected!";
+
+		private readonly List<string> unexpectedMessages = new List<string>();
+
+		public ImportCounter()
+		{
+			ImportCountingPostprocessor.Imported += OnImported;
+			Application.logMessageReceived += OnLog;
+			// the errors are checked in AssertSettled
+			LogAssert.ignoreFailingMessages = true;
+		}
+
+		private void OnImported(string path)
+		{
+			if (!path.StartsWith(Folder + "/", StringComparison.Ordinal)) return;
+			counts.TryGetValue(path, out var count);
+			counts[path] = count + 1;
+		}
+
+		private void OnLog(string message, string stackTrace, LogType type)
+		{
+			var isError = type == LogType.Error || type == LogType.Exception || type == LogType.Assert;
+			// Unity logs the circular dependency error and the details as two messages
+			var isCircularDependencyError = message.StartsWith(CircularDependencyError, StringComparison.Ordinal) ||
+			                                message.StartsWith("Refresh queue details:", StringComparison.Ordinal);
+			if (isError && !isCircularDependencyError)
+				unexpectedMessages.Add(message);
+			else if (message.IndexOf("import loop", StringComparison.OrdinalIgnoreCase) >= 0)
+				unexpectedMessages.Add(message);
+		}
+
+		public void AssertSettled()
+		{
+			var summary = string.Join(", ", counts.Select(c => $"{Path.GetFileName(c.Key)}: {c.Value}"));
+			CollectionAssert.IsEmpty(unexpectedMessages, "Imports: " + summary);
+			foreach (var count in counts)
+				Assert.LessOrEqual(count.Value, MaxImportsPerFile, $"{count.Key} was imported too often. Imports: {summary}");
+			counts.Clear();
+		}
+
+		public void Dispose()
+		{
+			ImportCountingPostprocessor.Imported -= OnImported;
+			Application.logMessageReceived -= OnLog;
+			LogAssert.ignoreFailingMessages = false;
+			CollectionAssert.IsEmpty(unexpectedMessages);
+		}
+	}
+
+	private class ImportCountingPostprocessor : AssetPostprocessor
+	{
+		public static event Action<string> Imported;
+
+		private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+		{
+			if (Imported == null) return;
+			foreach (var path in importedAssets) Imported(path);
+		}
+	}
+
+	private void RemapUserMaterial(Material target) => RemapMaterial(userPath, target);
+
+	private static void RemapMaterial(string path, Material target)
+	{
+		var importer = (GLTFImporter)AssetImporter.GetAtPath(path);
+		importer.SetRemap(LoadMaterial(path), target);
 		importer.SaveAndReimport();
+	}
+
+	private static void AssertUsesMaterialOf(string path, string materialPath)
+	{
+		var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+		Assert.IsTrue(asset, $"{path} did not import");
+		var material = asset.GetComponentInChildren<Renderer>().sharedMaterial;
+		Assert.IsTrue(material, $"renderer of {path} has no material");
+		Assert.AreEqual(materialPath, AssetDatabase.GetAssetPath(material), $"material '{material.name}' of {path} is not remapped to {materialPath}");
 	}
 
 	/// <summary>
@@ -201,7 +444,7 @@ public class MaterialRemapImportTests
 		Assert.AreEqual(LibraryMaterial, material.name);
 	}
 
-	private static byte[] TriangleGlb(string materialName, float[] baseColor)
+	internal static byte[] TriangleGlb(string materialName, float[] baseColor)
 	{
 		var floats = new float[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 };
 		var bin = new byte[floats.Length * 4];
