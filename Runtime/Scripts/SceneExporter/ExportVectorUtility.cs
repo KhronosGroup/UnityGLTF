@@ -30,9 +30,8 @@ namespace UnityGLTF
 			replaced = 0;
 			if (normals.Length == 0) return result;
 
-			var source = UnsafeUtility.PinGCArrayAndGetDataAddress(normals, out var sourceHandle);
-			var target = UnsafeUtility.PinGCArrayAndGetDataAddress(result, out var targetHandle);
-			try
+			fixed (Vector3* source = normals)
+			fixed (Vector3* target = result)
 			{
 				int count;
 				new ConvertNormalsJob
@@ -44,11 +43,6 @@ namespace UnityGLTF
 					Replaced = &count,
 				}.Run();
 				replaced = count;
-			}
-			finally
-			{
-				UnsafeUtility.ReleaseGCObject(sourceHandle);
-				UnsafeUtility.ReleaseGCObject(targetHandle);
 			}
 			return result;
 		}
@@ -66,29 +60,21 @@ namespace UnityGLTF
 			if (tangents.Length == 0) return result;
 
 			var hasNormals = gltfNormals != null && gltfNormals.Length == tangents.Length;
-			var source = UnsafeUtility.PinGCArrayAndGetDataAddress(tangents, out var sourceHandle);
-			var target = UnsafeUtility.PinGCArrayAndGetDataAddress(result, out var targetHandle);
-			ulong normalsHandle = 0;
-			var normals = hasNormals ? UnsafeUtility.PinGCArrayAndGetDataAddress(gltfNormals, out normalsHandle) : null;
-			try
+			fixed (Vector4* source = tangents)
+			fixed (Vector4* target = result)
+			fixed (Vector3* normals = hasNormals ? gltfNormals : null)
 			{
 				int count;
 				new ConvertTangentsJob
 				{
 					Source = (float4*)source,
 					Result = (float4*)target,
-					Normals = (float3*)normals,
+					Normals = (float3*)normals, // null for a null array
 					Length = tangents.Length,
 					Scale = coordinateScale,
 					Replaced = &count,
 				}.Run();
 				replaced = count;
-			}
-			finally
-			{
-				UnsafeUtility.ReleaseGCObject(sourceHandle);
-				UnsafeUtility.ReleaseGCObject(targetHandle);
-				if (hasNormals) UnsafeUtility.ReleaseGCObject(normalsHandle);
 			}
 			return result;
 		}
@@ -98,25 +84,19 @@ namespace UnityGLTF
 		{
 			if (indices.Length == 0) return false;
 
-			var normalsPtr = UnsafeUtility.PinGCArrayAndGetDataAddress(normals, out var normalsHandle);
-			var indicesPtr = UnsafeUtility.PinGCArrayAndGetDataAddress(indices, out var indicesHandle);
-			try
+			fixed (Vector3* normalsPtr = normals)
+			fixed (int* indicesPtr = indices)
 			{
 				bool result;
 				new HasOnlyZeroNormalsJob
 				{
 					Normals = (float3*)normalsPtr,
 					NormalsLength = normals.Length,
-					Indices = (int*)indicesPtr,
+					Indices = indicesPtr,
 					IndicesLength = indices.Length,
 					Result = &result,
 				}.Run();
 				return result;
-			}
-			finally
-			{
-				UnsafeUtility.ReleaseGCObject(normalsHandle);
-				UnsafeUtility.ReleaseGCObject(indicesHandle);
 			}
 		}
 
