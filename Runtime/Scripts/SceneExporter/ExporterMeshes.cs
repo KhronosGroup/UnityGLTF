@@ -259,11 +259,22 @@ namespace UnityGLTF
 
 				aPosition = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.vertices, SchemaExtensions.CoordinateSpaceConversionScale));
 
+				Vector3[] normals = null;
 				if (meshObj.HasVertexAttribute(VertexAttribute.Normal))
-					aNormal = ExportAccessor(SchemaExtensions.ConvertVector3CoordinateSpaceAndCopy(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale));
+				{
+					normals = ExportVectorUtility.ConvertNormals(meshObj.normals, SchemaExtensions.CoordinateSpaceConversionScale.ToUnityVector3Raw(), out var replaced);
+					if (replaced > 0)
+						Debug.LogWarning(null, $"Mesh {meshObj.name} has {replaced} zero-length normals, exported them as (0, 1, 0) since glTF requires unit length normals", meshObj);
+					aNormal = ExportAccessor(normals);
+				}
 
 				if (meshObj.HasVertexAttribute(VertexAttribute.Tangent))
-					aTangent = ExportAccessor(SchemaExtensions.ConvertTangentCoordinateSpaceAndCopy(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale));
+				{
+					var tangents = ExportVectorUtility.ConvertTangents(meshObj.tangents, SchemaExtensions.TangentSpaceConversionScale.ToUnityVector4Raw(), normals, out var replaced);
+					if (replaced > 0)
+						Debug.LogWarning(null, $"Mesh {meshObj.name} has {replaced} zero-length tangents, exported them perpendicular to the normal since glTF requires unit length tangents", meshObj);
+					aTangent = ExportAccessor(tangents);
+				}
 
 				if (meshObj.HasVertexAttribute(VertexAttribute.TexCoord0))
 				{
@@ -358,9 +369,15 @@ namespace UnityGLTF
 					primitive.Attributes = new Dictionary<string, AccessorId>();
 					primitive.Attributes.Add(SemanticProperties.POSITION, accessors.aPosition);
 
-					if (accessors.aNormal != null)
+					// Points and lines without NORMAL are rendered unlit, with it lit (glTF 2.0, 3.9.7 Point and Line Materials).
+					// Keep them unlit when none of their vertices had a normal, e.g. lines next to triangles in one mesh,
+					// whose normals RecalculateNormals leaves at zero.
+					var hasNormals = accessors.aNormal != null &&
+					                 (topology == MeshTopology.Triangles || meshObj.blendShapeCount > 0 || !ExportVectorUtility.HasOnlyZeroNormals(meshObj.normals, indices));
+					if (hasNormals)
 						primitive.Attributes.Add(SemanticProperties.NORMAL, accessors.aNormal);
-					if (accessors.aTangent != null)
+					// Tangents are ignored without normals (glTF 2.0, 3.7.2.1), so they go together
+					if (accessors.aTangent != null && (hasNormals || accessors.aNormal == null))
 						primitive.Attributes.Add(SemanticProperties.TANGENT, accessors.aTangent);
 					if (accessors.aTexcoord0 != null)
 						primitive.Attributes.Add(SemanticProperties.TEXCOORD_0, accessors.aTexcoord0);

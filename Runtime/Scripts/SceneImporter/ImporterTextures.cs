@@ -575,6 +575,12 @@ namespace UnityGLTF
 				}
 			}
 
+#if UNITY_EDITOR
+			// A remapped texture is a project asset that Unity has already imported (and encoded) itself.
+			// The conversion below modifies and destroys its source, which must never happen to an asset.
+			if (haveRemappedTexture)
+				convertToDxt5nmFormat = false;
+#endif
 			if (texture && convertToDxt5nmFormat)
 			{
 				texture = await NormalMapEncodingConverter.ConvertToDxt5nmAndCheckTextureFormatAsync(texture);

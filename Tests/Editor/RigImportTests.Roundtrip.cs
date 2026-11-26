@@ -397,6 +397,10 @@ public partial class RigImportTests
 			// Own settings instead of the project's, so the test doesn't depend on (or create) them
 			settings.UseMainCameraVisibility = false;
 			settings.ExportAnimations = true;
+			// Cameras are imported disabled by default (CameraImportOption.ImportAndCameraDisabled) and disabled cameras
+			// aren't exported, so they and the 180° flip of their nodes would be lost
+			foreach (var camera in instance.GetComponentsInChildren<Camera>(true))
+				camera.enabled = true;
 			var exporter = new GLTFSceneExporter(instance.transform, new ExportContext(settings));
 			File.WriteAllBytes(exportPath, exporter.SaveGLBToByteArray(Path.GetFileNameWithoutExtension(exportPath)));
 		}
