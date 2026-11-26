@@ -77,13 +77,15 @@ namespace GLTF.Schema
 		{
 			writer.WriteStartObject();
 
-			if (MagFilter != MagFilterMode.Linear && MagFilter != MagFilterMode.None)
+			// Filters are always written: glTF 2.0 has no defaults for them (LINEAR and NEAREST_MIPMAP_LINEAR were glTF 1.0 defaults),
+			// leaving them out means "auto filtering"
+			if (MagFilter != MagFilterMode.None)
 			{
 				writer.WritePropertyName("magFilter");
 				writer.WriteValue((int)MagFilter);
 			}
 
-			if (MinFilter != MinFilterMode.NearestMipmapLinear && MinFilter != MinFilterMode.None)
+			if (MinFilter != MinFilterMode.None)
 			{
 				writer.WritePropertyName("minFilter");
 				writer.WriteValue((int)MinFilter);

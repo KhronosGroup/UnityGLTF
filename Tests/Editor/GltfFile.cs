@@ -225,9 +225,12 @@ internal static class GltfFile
 		// Unity limitations:
 		// - it can't use the nearest texel within a mipmap while blending between mipmaps, Trilinear is the closest
 		// - it always generates mipmaps, so a minFilter without mipmaps comes back as its mipmap variant
+		// Intended (UnityGLTF 1ec44f51): Bilinear textures with an anisoLevel above 0 (Unity's default is 1) are exported as
+		// LINEAR_MIPMAP_LINEAR to match their smoothness in Unity
 		var unityLimitation = originalMin == NearestMipmapLinear && exportedMin == LinearMipmapLinear ||
 		                      originalMin == Linear && exportedMin == LinearMipmapNearest ||
-		                      originalMin == Nearest && exportedMin == NearestMipmapNearest;
+		                      originalMin == Nearest && exportedMin == NearestMipmapNearest ||
+		                      (originalMin == Linear || originalMin == LinearMipmapNearest) && exportedMin == LinearMipmapLinear;
 		if (originalMin != null && originalMin != exportedMin && !unityLimitation)
 			differences.Add($"{where} minFilter: {FilterName(originalMin)} vs {FilterName(exportedMin)}");
 	}

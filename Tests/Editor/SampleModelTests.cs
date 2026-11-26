@@ -30,12 +30,8 @@ public class SampleModelTests
 	private const float MaxDifferentPixels = 0.002f;
 
 	// Known failures, caused by export settings rather than bugs:
-	// - Duck, 2CylinderEngine, MultiUVTest (Roundtrip_KeepsHierarchyMeshesAndAnimations): cameras are imported disabled by default
-	//   (CameraImportOption.ImportAndCameraDisabled) and disabled cameras aren't exported, so the camera and its 180° flip are lost.
 	// - NormalTangentTest (Roundtrip_LooksTheSame, with URP): textures without alpha are exported as JPEG by default
 	//   (UseTextureFileTypeHeuristic), and the JPEG artifacts in the normal map change the highlights. As PNG, the export looks the same.
-	// - Texture filters (Roundtrip_KeepsMaterials, Roundtrip_ExportMatchesOriginalFile): magFilter LINEAR isn't written to the file,
-	//   and Bilinear textures are exported as LINEAR_MIPMAP_LINEAR because every anisoLevel above 0 counts as anisotropic filtering.
 	public static readonly string[] Samples =
 	{
 		// Skins, animations and morph targets
@@ -163,7 +159,10 @@ public class SampleModelTests
 							break;
 						}
 						if (!et) break;
-						if (et.filterMode != at.filterMode) differences.Add($"{where}: filter mode {et.filterMode} vs {at.filterMode}");
+						// Intended (UnityGLTF 1ec44f51): Bilinear textures with an anisoLevel above 0 are exported as LINEAR_MIPMAP_LINEAR to match
+						// their smoothness in Unity, which imports as Trilinear
+						var bilinearExportedAsTrilinear = et.filterMode == FilterMode.Bilinear && at.filterMode == FilterMode.Trilinear && et.anisoLevel > 0;
+						if (et.filterMode != at.filterMode && !bilinearExportedAsTrilinear) differences.Add($"{where}: filter mode {et.filterMode} vs {at.filterMode}");
 						if (et.wrapModeU != at.wrapModeU || et.wrapModeV != at.wrapModeV)
 							differences.Add($"{where}: wrap mode {et.wrapModeU}x{et.wrapModeV} vs {at.wrapModeU}x{at.wrapModeV}");
 						if (e.GetTextureScale(name) != a.GetTextureScale(name) || e.GetTextureOffset(name) != a.GetTextureOffset(name))
