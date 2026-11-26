@@ -189,8 +189,70 @@ public class SampleModelTests
 		Assert.IsEmpty(differences, $"{sample}: differences between the original and the exported file:\n" + string.Join("\n", differences));
 	}
 
+	/// <summary>
+	/// Result of Roundtrip_LooksTheSame, written as {sample}.json next to the comparison image
+	/// (read by the Roundtrip Results window of com.needle.gltf-validation).
+	/// </summary>
+	[Serializable]
+	internal class LooksTheSameResult
+	{
+		public string sample;
+		public string test;
+		public bool passed;
+		public float differentPixels = -1;
+		public float maxDifferentPixels = MaxDifferentPixels;
+		public int pixelThreshold = PixelThreshold;
+		public float emptyPixels = -1;
+		public string error;
+		public string image;
+		public string roundtrip;
+		public string time;
+		public string unityVersion;
+		public string project;
+	}
+
 	[TestCaseSource(nameof(Samples))]
 	public void Roundtrip_LooksTheSame(string sample)
+	{
+		var result = new LooksTheSameResult
+		{
+			sample = sample,
+			test = $"{nameof(SampleModelTests)}.{nameof(Roundtrip_LooksTheSame)}(\"{sample}\")",
+			image = Path.GetFullPath($"{OutputFolder}/{sample}.png"),
+			roundtrip = Path.GetFullPath($"{OutputFolder}/{sample}_Roundtrip.glb"),
+			time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+			unityVersion = Application.unityVersion,
+			project = Path.GetFileName(Path.GetDirectoryName(Application.dataPath)),
+		};
+		try
+		{
+			LooksTheSame(sample, result);
+			result.passed = true;
+		}
+		catch (IgnoreException)
+		{
+			// No connection: nothing was compared, keep the previous result
+			result = null;
+			throw;
+		}
+		catch (AssertionException e)
+		{
+			result.error = e.Message.Trim();
+			throw;
+		}
+		catch (Exception e)
+		{
+			result.error = $"{e.GetType().Name}: {e.Message}".Trim();
+			throw;
+		}
+		finally
+		{
+			if (result != null)
+				File.WriteAllText($"{OutputFolder}/{sample}.json", JsonUtility.ToJson(result, true));
+		}
+	}
+
+	private static void LooksTheSame(string sample, LooksTheSameResult result)
 	{
 		var (path, roundtripPath) = ImportAndRoundtrip(sample);
 
@@ -212,6 +274,8 @@ public class SampleModelTests
 		try
 		{
 			var different = Compare(expected, actual, $"{OutputFolder}/{sample}.png", out var empty);
+			result.differentPixels = different;
+			result.emptyPixels = empty;
 			var message = $"{sample}: {different:P2} of the pixels differ after the roundtrip, see {Path.GetFullPath($"{OutputFolder}/{sample}.png")}";
 			Debug.Log(message);
 			Assert.Less(empty, 0.99f, $"{sample}: the original renders empty, nothing to compare");

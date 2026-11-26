@@ -50,6 +50,16 @@ public partial class RigImportTests
 
 	#region Helpers
 
+	/// <summary>
+	/// Switches the file to the GLTFImporter when another importer is the default for .gltf/.glb files in the project
+	/// (with glTFast installed, the GLTFImporter is only an override importer).
+	/// </summary>
+	internal static void UseGltfImporter(string path)
+	{
+		if (AssetDatabase.GetImporterType(path) != typeof(GLTFImporter))
+			AssetDatabase.SetImporterOverride<GLTFImporter>(path);
+	}
+
 	private static void CopyTestAsset(string file, string path)
 	{
 		var source = FileUtil.GetPhysicalPath($"{SourceFolder}/{file}");
@@ -73,6 +83,7 @@ public partial class RigImportTests
 	/// </summary>
 	internal static void Reimport(string path, AnimationMethod method, string rootNodeName = "", bool removeEmptyRoots = true, bool humanoidFlip = false, bool readWrite = true, bool humanoidClips = false)
 	{
+		UseGltfImporter(path);
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 		Assert.IsNotNull(importer, $"{path} is not imported with the {nameof(GLTFImporter)}");
 

@@ -333,6 +333,7 @@ public class BlendShapeWeightTests
 	/// </summary>
 	private static void SetFrameWeightMultiplier(string path, BlendShapeFrameWeightSetting.MultiplierOption option)
 	{
+		RigImportTests.UseGltfImporter(path);
 		var importer = AssetImporter.GetAtPath(path) as GLTFImporter;
 		Assert.IsNotNull(importer, $"{path} is not imported with the {nameof(GLTFImporter)}");
 		var so = new SerializedObject(importer);
