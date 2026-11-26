@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using GLTF;
 using GLTF.Schema;
@@ -165,7 +166,7 @@ namespace UnityGLTF
 		        BufferCacheData bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
 		        if (bufferContents.bufferData.IsCreated)
 		        {
-			        bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+			        bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkDataOffset;
 			        stream = new SubStream(bufferContents.Stream, 0, bufferView.ByteLength);
 		        }
 	        }
@@ -248,7 +249,7 @@ namespace UnityGLTF
 			switch (image.MimeType)
 			{
 				case "image/jpeg":
-#if UNITY_6000_0_OR_NEWER
+#if UNITY_6000_1_OR_NEWER
 					texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
 #else
 					texture.LoadImage(data.ToArray(), makeNoLongerReadable);
@@ -257,7 +258,7 @@ namespace UnityGLTF
 				case "image/png":
 					//	NOTE: the second parameter of both LoadImage() and Apply() in this case block marks the texture non-readable, but we can't mark it until after we call Apply() after this switch block.
 					
-#if UNITY_6000_0_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 6+, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
+#if UNITY_6000_1_OR_NEWER // ReadOnlySpan support was added to LoadImage in Unity 6.1+, but we still need to call ToArray() for older versions, so we can't use it in the whole method yet.
 					
 					var pngColorType = data.AsReadOnlySpan().Length > 25 ? data.AsReadOnlySpan()[25] : 0;
 					var pngHasAlpha = pngColorType == 4 || pngColorType == 6; // 4 = grayscale+alpha, 6 = rgb+alpha    https://www.w3.org/TR/PNG-Chunks.html
@@ -308,7 +309,7 @@ namespace UnityGLTF
 #if UNITY_6000_0_OR_NEWER
 					if (Context.TryGetPlugin<ExrImportContext>(out _))
 					{
-#if UNITY_6000_0_OR_NEWER
+#if UNITY_6000_1_OR_NEWER
 						texture.LoadImage(data.AsReadOnlySpan(), makeNoLongerReadable);
 #else
 						texture.LoadImage(data.ToArray(), makeNoLongerReadable);
@@ -383,7 +384,7 @@ namespace UnityGLTF
 #endif
 					break;
 				default:
-#if UNITY_6000_0_OR_NEWER
+#if UNITY_6000_1_OR_NEWER
 					texture.LoadImage(data.AsReadOnlySpan(), markGpuOnly && !textureWillBeCompressed);
 #else
 					texture.LoadImage(data.ToArray(), markGpuOnly && !textureWillBeCompressed);
@@ -508,10 +509,11 @@ namespace UnityGLTF
 					if (memoryStream.TryGetBuffer(out var memStreamBuffer))
 					{
 						NativeArray<byte> nativeBuffer;
-						ulong gcHandle;
+						GCHandle gcHandle;
 						unsafe
 						{
-							var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out gcHandle);
+							gcHandle = GCHandle.Alloc(memStreamBuffer.Array, GCHandleType.Pinned);
+							var ptr = (byte*)gcHandle.AddrOfPinnedObject() + memStreamBuffer.Offset;
 							nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 							NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
@@ -525,7 +527,7 @@ namespace UnityGLTF
 						}
 						finally
 						{
-							UnsafeUtility.ReleaseGCObject(gcHandle);
+							gcHandle.Free();
 						}
 					}
 					else
@@ -550,12 +552,35 @@ namespace UnityGLTF
 				
 				stream.Read(buffer, 0, (int)stream.Length);
 				await YieldOnTimeoutAndThrowOnLowMemory();
-				using (NativeArray<byte> bufferNative = new NativeArray<byte>(buffer, Allocator.TempJob))
+
+				NativeArray<byte> nativeBuffer;
+				GCHandle gcHandle;
+				unsafe
 				{
-					texture = await CheckMimeTypeAndLoadImage(image, texture, bufferNative, markGpuOnly, isLinear);
+					
+					gcHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					var ptr = (void*)gcHandle.AddrOfPinnedObject();
+					nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, buffer.Length, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+					NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
+				}
+				try
+				{
+					texture = await CheckMimeTypeAndLoadImage(image, texture, nativeBuffer, markGpuOnly, isLinear);
+				}
+				finally
+				{
+					gcHandle.Free();
 				}
 			}
 
+#if UNITY_EDITOR
+			// A remapped texture is a project asset that Unity has already imported (and encoded) itself.
+			// The conversion below modifies and destroys its source, which must never happen to an asset.
+			if (haveRemappedTexture)
+				convertToDxt5nmFormat = false;
+#endif
 			if (texture && convertToDxt5nmFormat)
 			{
 				texture = await NormalMapEncodingConverter.ConvertToDxt5nmAndCheckTextureFormatAsync(texture);
@@ -727,24 +752,32 @@ namespace UnityGLTF
 				if (texture.Sampler != null)
 				{
 					var sampler = texture.Sampler.Value;
-					switch (sampler.MinFilter)
+					// Unity has one filter mode for magnification and minification: magFilter decides if the texture is pixelated,
+					// minFilter if mipmaps are blended. A sampler without minFilter has NEAREST_MIPMAP_LINEAR (the default),
+					// which together with the default magFilter LINEAR is a smooth texture, not a pixelated one.
+					if (sampler.MagFilter == MagFilterMode.Nearest)
 					{
-						case MinFilterMode.Nearest:
-						case MinFilterMode.NearestMipmapNearest:
-						case MinFilterMode.NearestMipmapLinear:
-							desiredFilterMode = FilterMode.Point;
-							break;
-						case MinFilterMode.Linear:
-						case MinFilterMode.LinearMipmapNearest:
-							desiredFilterMode = FilterMode.Bilinear;
-							break;
-						case MinFilterMode.LinearMipmapLinear:
-							desiredFilterMode = FilterMode.Trilinear;
-							break;
-						default:
-							Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
-							desiredFilterMode = FilterMode.Bilinear;
-							break;
+						desiredFilterMode = FilterMode.Point;
+					}
+					else
+					{
+						switch (sampler.MinFilter)
+						{
+							case MinFilterMode.Nearest:
+							case MinFilterMode.NearestMipmapNearest:
+							case MinFilterMode.Linear:
+							case MinFilterMode.LinearMipmapNearest:
+								desiredFilterMode = FilterMode.Bilinear;
+								break;
+							case MinFilterMode.NearestMipmapLinear:
+							case MinFilterMode.LinearMipmapLinear:
+								desiredFilterMode = FilterMode.Trilinear;
+								break;
+							default:
+								Debug.Log(LogType.Warning, "Unsupported Sampler.MinFilter: " + sampler.MinFilter+ $" (File: {_gltfFileName})");
+								desiredFilterMode = FilterMode.Bilinear;
+								break;
+						}
 					}
 
 					TextureWrapMode UnityWrapMode(GLTF.Schema.WrapMode gltfWrapMode)
@@ -858,7 +891,7 @@ namespace UnityGLTF
 			var data = new byte[bufferView.ByteLength];
 
 			var bufferContents = _assetCache.BufferCache[bufferView.Buffer.Id];
-			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkOffset;
+			bufferContents.Stream.Position = bufferView.ByteOffset + bufferContents.ChunkDataOffset;
 			bufferContents.Stream.Read(data, 0, data.Length);
 			texture.LoadImage(data);
 

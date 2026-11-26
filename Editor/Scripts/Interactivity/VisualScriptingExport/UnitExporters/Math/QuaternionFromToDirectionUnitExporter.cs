@@ -21,9 +21,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as InvokeMember;
 
             var node = unitExporter.CreateNode<Math_QuatFromDirectionsNode>();
-            node.ValueIn(Math_QuatFromAxisAngleNode.IdAngle).MapToInputPort(unit.valueInputs[0]);
-            node.ValueIn(Math_QuatFromAxisAngleNode.IdAxis).MapToInputPort(unit.valueInputs[1]);
-            node.ValueOut(Math_QuatFromAxisAngleNode.IdOutValue).MapToPort(unit.result);
+            node.ValueIn(Math_QuatFromDirectionsNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
+            node.ValueIn(Math_QuatFromDirectionsNode.IdValueB).MapToInputPort(unit.valueInputs[1]);
+            node.ValueOut(Math_QuatFromDirectionsNode.IdOutValue).MapToPort(unit.result);
 
             unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;

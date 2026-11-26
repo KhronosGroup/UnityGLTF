@@ -57,20 +57,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     int index = 0;
                     foreach (var output in validOutputs)
                     {
-                        //multiGate.FlowOut(index.ToString()).MapToControlOutput(output);
-
-                        // Adds WaitAll node
-                        var awaiterNode = CoroutineHelper.AddCoroutineAwaiter(unitExporter, multiGate, index.ToString());
+                        // the next output starts when this one and the waits it started are done
+                        var awaiterNode = CoroutineHelper.AddBodyAwaiter(unitExporter, multiGate.FlowOut(index.ToString()), output);
                         awaiterNode.FlowOutDoneSocket()
                             .ConnectToFlowDestination(multiGate.FlowIn(Flow_MultiGateNode.IdFlowIn));
-
-
-                        awaiterNode.Configuration[Flow_WaitAllNode.IdConfigInputFlows].Value = 1;
-                        var outputSequ = unitExporter.CreateNode<Flow_SequenceNode>();
-                        multiGate.FlowOut(index.ToString())
-                            .ConnectToFlowDestination(outputSequ.FlowIn(Flow_SequenceNode.IdFlowIn));
-                        outputSequ.FlowOut("0").MapToControlOutput(output);
-                        outputSequ.FlowOut("1").ConnectToFlowDestination(awaiterNode.FlowIn("0"));
 
                         index++;
                     }
@@ -84,7 +74,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var nextIndex = multiGate.FlowConnections.Count;
 
                     var newFlowOut = multiGate.FlowOut(nextIndex.ToString());
-                    awaiter.AddCoroutineWait(unitExporter, multiGate, newFlowOut.socket.Key);
+                    awaiter.AddCoroutineWait(unitExporter, node, Flow_SequenceNode.IdFlowIn, multiGate, newFlowOut.socket.Key);
                 };
 
             }

@@ -31,7 +31,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 if (awaiter == null)
                     return;
                 
-                awaiter.AddCoroutineWait(unitExporter, node, Flow_SetDelayNode.IdFlowDone);
+                awaiter.AddCoroutineWait(unitExporter, node, Flow_SetDelayNode.IdFlowIn, node, Flow_SetDelayNode.IdFlowDone);
             };
             return true;
         }

@@ -33,18 +33,17 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             unitExporter.MapInputPortToSocketName(unit.name, Event_SendNode.IdEvent, node);
             unitExporter.MapInputPortToSocketName(unit.enter, Event_SendNode.IdFlowIn, node);
             
-            node.ValueIn("targetNodeIndex").MapToInputPort(unit.target).SetType(TypeRestriction.LimitToInt);
+            node.ValueIn("targetNodeRef").MapToInputPort(unit.target).SetType(TypeRestriction.LimitToRef);
             
             var args = new Dictionary<string, GltfInteractivityUnitExporterNode.EventValues>();
-            args.Add("targetNodeIndex", new GltfInteractivityUnitExporterNode.EventValues { Type = GltfTypes.TypeIndexByGltfSignature("int")  });
+            args.Add("targetNodeRef", new GltfInteractivityUnitExporterNode.EventValues { Type = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref)});
             
             foreach (var arg in unit.arguments)
             {
                 var argId = arg.key;
-                var argTypeIndex = GltfTypes.TypeIndex(arg.type);
+                var argTypeIndex = -1;
                 var eventValue = new GltfInteractivityUnitExporterNode.EventValues { Type = argTypeIndex };
                 args.Add(argId, eventValue);
-
                 node.ValueIn(argId).MapToInputPort(arg);
             }
             var index = unitExporter.vsExportContext.AddEventIfNeeded(unit, args);

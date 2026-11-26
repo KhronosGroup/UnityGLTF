@@ -15,7 +15,7 @@ namespace GLTF.Schema
 		/// The offset relative to the start of the bufferView in bytes. Must be aligned.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public int ByteOffset;
+		public long ByteOffset;
 
 		/// <summary>
 		/// The indices data type. Valid values correspond to WebGL enums:

@@ -3,7 +3,9 @@ using System.Reflection;
 using GLTF.Schema;
 using UnityEditor;
 using UnityEngine;
+#if HAVE_UGUI
 using UnityEngine.UI;
+#endif
 
 namespace UnityGLTF.Plugins
 {
@@ -15,8 +17,17 @@ namespace UnityGLTF.Plugins
         public override bool EnabledByDefault => false;
         public override GLTFExportPluginContext CreateInstance(ExportContext context)
         {
+#if HAVE_UGUI
             return new CanvasExportContext();
+#else
+            return null;
+#endif
         }
+        
+        
+#if !HAVE_UGUI
+        public override string Warning => "com.unity.ugui package is not installed. Please install UGUI from the Package Manager to use this plugin.";
+#endif        
     }
     
     public class CanvasExportContext: GLTFExportPluginContext
@@ -25,6 +36,8 @@ namespace UnityGLTF.Plugins
         
         public override void AfterNodeExport(GLTFSceneExporter exporter, GLTFRoot root, Transform transform, Node node)
         {
+#if HAVE_UGUI
+
             // emit mesh and material if this is a Graphic element in a Canvas that's not disabled
             if (!shader)
             {
@@ -81,6 +94,7 @@ namespace UnityGLTF.Plugins
                 if (Application.isPlaying) Object.Destroy(cap);
                 else Object.DestroyImmediate(cap);
             }
+#endif
         }
     }
 }

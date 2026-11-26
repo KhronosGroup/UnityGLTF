@@ -29,7 +29,19 @@ namespace UnityGLTF.Interactivity.Export
         
         public delegate void OnBeforeSerializationDelegate(List<GltfInteractivityExportNode> nodes);
         public event OnBeforeSerializationDelegate OnBeforeSerialization;
-        
+
+        /// <summary>
+        /// Enables the export plugins and settings interactivity depends on.
+        /// Must be called from <see cref="GLTFExportPlugin.CreateInstance"/>.
+        /// </summary>
+        public static void ForceRequiredExportSettings(ExportContext context)
+        {
+            // Graphs can change the visibility of (disabled) nodes and use pointers
+            context.Exporter.ForcePluginEnable<VisibilityExport>(true);
+            context.Exporter.ForcePluginEnable<AnimationPointerExport>(true);
+            context.Exporter.ExportDisabledGameObjects = true;
+        }
+
         public override void AfterSceneExport(GLTFSceneExporter exporter, GLTFRoot gltfRoot)
         {
             this.exporter = exporter;
@@ -37,6 +49,7 @@ namespace UnityGLTF.Interactivity.Export
             
             TriggerInterfaceExportCallbacks();
             
+            AddSelectabilityExtensionToInvisibleNodes();
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
             CheckForImplicitValueConversions();
@@ -45,8 +58,11 @@ namespace UnityGLTF.Interactivity.Export
             
             CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
             // Final Topological Sort
-            TopologicalSort();  
+            TopologicalSort(includeFlows: true);
+            
+            ResolveRefToStaticPointer();
             
             CollectOpDeclarations();
 
@@ -54,10 +70,214 @@ namespace UnityGLTF.Interactivity.Export
             
             ApplyInteractivityExtension();
         }
+
+        /// <summary>
+        /// Replace float.positiveInfinite, NaN etc with nodes that can be serialized to JSON. This is needed because JSON does not support these values.
+        /// </summary>
+        protected virtual void ReplaceSpecialValuesWithNodes()
+        {
+            var nodes = nodesToSerialize.ToArray();
+            
+            void ReplaceInputWithNode(GltfInteractivityNode.ValueSocketData socket, params GltfInteractivityNodeSchema[] schema)
+            {
+                var lastSocket = socket;
+                foreach (var s in schema)
+                {
+                    var node = new GltfInteractivityExportNode(s);
+                    node.Index = nodesToSerialize.Count;
+                    nodesToSerialize.Add(node);
+                    
+                    lastSocket.Node = node.Index;
+                    lastSocket.Socket = "value";
+                    lastSocket.Value = null;
+
+                    if (node.ValueInConnection.ContainsKey("a"))
+                        lastSocket = node.ValueInConnection["a"];
+                }
+                
+            }
+            
+            void ReplaceScalar(GltfInteractivityNode.ValueSocketData socket, double value)
+            {
+                if (double.IsNaN(value))
+                    ReplaceInputWithNode(socket, new Math_NaNNode());
+                else if (double.IsPositiveInfinity(value))
+                    ReplaceInputWithNode(socket, new Math_InfNode());
+                else if (double.IsNegativeInfinity(value))
+                    ReplaceInputWithNode(socket, new Math_NegNode(), new Math_InfNode());
+            }
+
+            // JSON has no NaN or infinity, so inline values containing them are computed by nodes instead
+            foreach (var v in nodes)
+            {
+                foreach (var input in v.ValueInConnection)
+                {
+                    var socket = input.Value;
+                    if (socket.Value == null || socket.Node != null || !GltfInteractivityNode.ValueSerializer.HasNonFiniteComponents(socket.Value))
+                        continue;
+
+                    var components = GltfInteractivityNode.ValueSerializer.FloatComponents(socket.Value);
+                    if (components.Length == 1)
+                    {
+                        ReplaceScalar(socket, components[0]);
+                        continue;
+                    }
+
+                    if (GltfInteractivityNode.ValueSerializer.IsTypeDefaultNaN(socket.Value) && socket.Type != -1)
+                    {
+                        // All components NaN is the type-default value: written as { "type": T } without "value"
+                        socket.Value = null;
+                        continue;
+                    }
+
+                    // Some components are NaN or infinity: combine the vector/matrix from float inputs
+                    var combine = CreateCombineNode(socket.Value, out var componentSocketIds);
+                    if (combine == null)
+                    {
+                        Debug.LogError($"Inline value {socket.Value} of node {v.Schema.Op} contains NaN or infinity and can't be written to JSON.");
+                        continue;
+                    }
+                    combine.Index = nodesToSerialize.Count;
+                    nodesToSerialize.Add(combine);
+                    socket.Node = combine.Index;
+                    socket.Socket = "value";
+                    socket.Value = null;
+
+                    for (int i = 0; i < components.Length; i++)
+                    {
+                        var componentSocket = combine.ValueInConnection[componentSocketIds[i]];
+                        if (double.IsNaN(components[i]) || double.IsInfinity(components[i]))
+                            ReplaceScalar(componentSocket, components[i]);
+                        else
+                            combine.SetValueInSocket(componentSocketIds[i], (float)components[i]);
+                    }
+                }
+            }
+        }
+
+        private static GltfInteractivityExportNode CreateCombineNode(object value, out string[] inputIds)
+        {
+            switch (value)
+            {
+                case Vector2 _:
+                    inputIds = new[] { Math_Combine2Node.IdValueA, Math_Combine2Node.IdValueB };
+                    return new GltfInteractivityExportNode(new Math_Combine2Node());
+                case Vector3 _:
+                    inputIds = new[] { Math_Combine3Node.IdValueA, Math_Combine3Node.IdValueB, Math_Combine3Node.IdValueC };
+                    return new GltfInteractivityExportNode(new Math_Combine3Node());
+                case Vector4 _:
+                case Quaternion _:
+                case Color _:
+                    inputIds = new[] { Math_Combine4Node.IdValueA, Math_Combine4Node.IdValueB, Math_Combine4Node.IdValueC, Math_Combine4Node.IdValueD };
+                    return new GltfInteractivityExportNode(new Math_Combine4Node());
+                case GltfFloat2x2 _:
+                    inputIds = Math_Combine2x2Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine2x2Node());
+                case GltfFloat3x3 _:
+                    inputIds = Math_Combine3x3Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine3x3Node());
+                case Matrix4x4 _:
+                    inputIds = Math_Combine4x4Node.IdInputs;
+                    return new GltfInteractivityExportNode(new Math_Combine4x4Node());
+                default:
+                    inputIds = null;
+                    return null;
+            }
+        }
+        
+        protected virtual void ResolveRefToStaticPointer()
+        {
+            int refTypeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            foreach (var v in variables)
+            {
+                if (v.Value == null)
+                    continue;
+
+                var valueTypeIndex = GltfTypes.TypeIndex(v.Value.GetType());
+                if (v.Type == refTypeIndex || valueTypeIndex == refTypeIndex)
+                {
+                    if (v.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, v.Value, out var jsonPointer))
+                        {
+                            v.Value = jsonPointer;
+                            v.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            v.Value = null;
+                            v.Type = refTypeIndex;
+                        }
+                    }
+                }
+            }
+
+            foreach (var n in nodesToSerialize)
+            {
+                foreach (var vIn in n.ValueInConnection)
+                {
+                    if (vIn.Value.Value != null && vIn.Value.Type == refTypeIndex &&
+                        vIn.Value.Value.GetType() != typeof(string))
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, vIn.Value.Value, out var jsonPointer))
+                        {
+                            vIn.Value.Value = jsonPointer;
+                            vIn.Value.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            vIn.Value.Value = null;
+                            vIn.Value.Type = refTypeIndex;
+                        }
+                    }
+                }
+            }
+
+            foreach (var cEvent in customEvents)
+            {
+                foreach (var values in cEvent.Values)
+                {
+                    if (values.Value == null || values.Value.Value == null)
+                        continue;
+
+                    var value = values.Value.Value;
+                    var mapping = GltfTypes.GetTypeMapping(value.GetType());
+                    var isRefType = values.Value.Type == GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+                    if (isRefType && mapping == null)
+                    {
+                        //Debug.LogError("Trying to resolve a reference to static json, but the type is not supported: " + value.GetType().Name);
+                        continue;
+                    }
+
+                    if (mapping == null)
+                    {
+                        continue;
+                    }
+                    if (isRefType || mapping.GltfSignature == GltfTypes.Ref)
+                    {
+                        if (RefResolver.TryRefToStaticJson(exporter, value, out var jsonPointer))
+                        {
+                            values.Value.Value = jsonPointer;
+                            values.Value.Type = refTypeIndex;
+                        }
+                        else
+                        { 
+                            // Reference not found in export context
+                            values.Value.Value = null;
+                            values.Value.Type = refTypeIndex;
+                        }
+
+                    }
+                }
+            }
+        }
         
         protected virtual void ApplyInteractivityExtension()
         {
             // TODO: Add support for multiple graphs and/or check if a graph already exists
+            Validator.ValidateData(this);
             
             GltfInteractivityExtension extension = new GltfInteractivityExtension();
             GltfInteractivityGraph mainGraph = new GltfInteractivityGraph();
@@ -65,12 +285,13 @@ namespace UnityGLTF.Interactivity.Export
             mainGraph.Nodes = nodesToSerialize.ToArray();
             mainGraph.Types = CollectAndFilterUsedTypes();
             
-            Validator.ValidateData(this);
             
             mainGraph.Variables = variables.ToArray();
             mainGraph.CustomEvents = customEvents.ToArray();
             mainGraph.Declarations = opDeclarations.ToArray();
-            
+
+            Validator.ValidateSpecification(extension);
+
             ActiveGltfRoot.AddExtension(GltfInteractivityExtension.ExtensionName, extension);
             
             exporter.DeclareExtensionUsage(GltfInteractivityExtension.ExtensionName);
@@ -84,26 +305,33 @@ namespace UnityGLTF.Interactivity.Export
 
         public void ConvertValue(object originalValue, out object convertedValue, out int typeIndex)
         {
-            if (originalValue is GameObject gameObject)
+            convertedValue = originalValue;
+            if (originalValue == null)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(gameObject.transform);
-
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                // e.g. an unconnected object input: the socket stays empty and gets the null value of its type later
+                typeIndex = -1;
+            }
+            else if (originalValue is Transform transform)
+            {
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            }
+            else if (originalValue is GameObject gameObject)
+            {
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Component component)
             {
-                var gameObjectNodeIndex =
-                    exporter.GetTransformIndex(component.transform);
-                convertedValue = gameObjectNodeIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
             }
             else if (originalValue is Material material)
             {
-                var materialIndex = exporter.ExportMaterial(material).Id;
-                convertedValue = materialIndex;
-                typeIndex = GltfTypes.TypeIndexByGltfSignature("int");
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Ref);
+            }
+            else if (originalValue is System.Enum enumValue)
+            {
+                // Enums are exported as their underlying int value (e.g. for Switch On Enum)
+                convertedValue = System.Convert.ToInt32(enumValue);
+                typeIndex = GltfTypes.TypeIndexByGltfSignature(GltfTypes.Int);
             }
             else
             {
@@ -136,12 +364,16 @@ namespace UnityGLTF.Interactivity.Export
                 return -1;
             }
             
-            var index = variables.FindIndex(v => v.Id == id);
+            var index = variables.FindIndex(v => v.Name == id);
             if (index != -1)
                 return index;
 
+            // Enums are exported as their int value
+            if (defaultValue is System.Enum enumValue)
+                defaultValue = System.Convert.ToInt32(enumValue);
+
             GltfInteractivityGraph.Variable newVariable = new GltfInteractivityGraph.Variable();
-            newVariable.Id = id;
+            newVariable.Name = id;
             
             newVariable.Type = gltfTypeIndex;
             
@@ -161,6 +393,7 @@ namespace UnityGLTF.Interactivity.Export
 
             GltfInteractivityGraph.CustomEvent newEvent = new GltfInteractivityGraph.CustomEvent();
             newEvent.Id = id;
+            newEvent.Name = id;
 
             if (arguments != null)
                 newEvent.Values = arguments;
@@ -224,26 +457,38 @@ namespace UnityGLTF.Interactivity.Export
 
             exporter.DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
         }
-        
-        public void AddSelectabilityExtensionToNode(int nodeIndex)
+
+        public void AddSelectabilityExtensionToNode(int nodeIndex, bool initValue = true)
         {
             if (nodeIndex == -1)
                 return;
+            
+            AddSelectabilityExtensionToNode(ActiveGltfRoot.Nodes[nodeIndex], initValue);
+        }
 
-            var nodeExtensions = ActiveGltfRoot.Nodes[nodeIndex].Extensions;
+        
+        public void AddSelectabilityExtensionToNode(Node node, bool initValue = true)
+        {
+            if (node == null)
+                return;
+
+            var nodeExtensions = node.Extensions;
             if (nodeExtensions == null)
             {
                 nodeExtensions = new Dictionary<string, IExtension>();
-                ActiveGltfRoot.Nodes[nodeIndex].Extensions = nodeExtensions;
+                node.Extensions = nodeExtensions;
             }
-            if (!nodeExtensions.ContainsKey(KHR_node_selectability_Factory.EXTENSION_NAME))
+            if (!nodeExtensions.TryGetValue(KHR_node_selectability_Factory.EXTENSION_NAME, out var nodeExtension))
             {
-                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability());
+                nodeExtensions.Add(KHR_node_selectability_Factory.EXTENSION_NAME, new KHR_node_selectability() { selectable = initValue });
             }
+            else
+                (nodeExtension as KHR_node_selectability).selectable = initValue;
+            
             exporter.DeclareExtensionUsage(KHR_node_selectability_Factory.EXTENSION_NAME, false);
         }
         
-        public void AddSelectabilityExtensionToAllNode()
+        public void AddSelectabilityExtensionToAllNodes()
         {
             foreach (var node in ActiveGltfRoot.Nodes)
             {
@@ -277,10 +522,16 @@ namespace UnityGLTF.Interactivity.Export
             }
         }
         
-        protected void TopologicalSort()
+        /// <param name="includeFlows">
+        /// false: only value connections are considered (source before consumer), e.g. to resolve types.
+        /// true: final order required by the specification, where value inputs must reference nodes with a lower index
+        /// AND output flows must point to nodes with a higher index. Remaining cycles over value and flow
+        /// connections are broken by routing a flow through a custom event.
+        /// </param>
+        protected void TopologicalSort(bool includeFlows = false)
         {
             // Resort the nodes after resolving the connections
-            var sorted = PostTopologicalSort();
+            var sorted = includeFlows ? SortByValuesAndFlows() : PostTopologicalSort();
             var newIndices = new Dictionary<int, int>(); // Key = Old Index, Value = New Index
             
             int newIndex = 0;
@@ -312,6 +563,136 @@ namespace UnityGLTF.Interactivity.Export
             nodesToSerialize.Sort((a, b) => a.Index.CompareTo(b.Index));
         }
         
+        private struct SortEdge
+        {
+            public int From;
+            public int To;
+            /// <summary> Flow socket id of the From node, null for value connections. </summary>
+            public string FlowSocket;
+        }
+
+        private List<SortEdge>[] CollectSortEdges()
+        {
+            var count = nodesToSerialize.Count;
+            var edges = new List<SortEdge>[count];
+            for (int i = 0; i < count; i++)
+                edges[i] = new List<SortEdge>();
+
+            bool IsValid(int? index) => index.HasValue && index.Value >= 0 && index.Value < count;
+
+            foreach (var node in nodesToSerialize)
+            {
+                foreach (var valueSocket in node.ValueInConnection)
+                    if (IsValid(valueSocket.Value.Node))
+                        edges[valueSocket.Value.Node.Value].Add(new SortEdge { From = valueSocket.Value.Node.Value, To = node.Index });
+
+                foreach (var flowSocket in node.FlowConnections)
+                    if (IsValid(flowSocket.Value.Node))
+                        edges[node.Index].Add(new SortEdge { From = node.Index, To = flowSocket.Value.Node.Value, FlowSocket = flowSocket.Key });
+            }
+            return edges;
+        }
+
+        /// <summary>
+        /// Kahn's algorithm over value and flow connections. Among the nodes that are ready, the one with the lowest
+        /// current index comes first, so the order stays as close as possible to the current one.
+        /// </summary>
+        /// <returns>false if the connections contain a cycle; <paramref name="sorted"/> then misses the nodes on or behind it.</returns>
+        private bool TrySortByValuesAndFlows(List<SortEdge>[] edges, out LinkedList<int> sorted)
+        {
+            var count = nodesToSerialize.Count;
+            var inDegree = new int[count];
+            foreach (var edge in edges.SelectMany(e => e))
+                inDegree[edge.To]++;
+
+            var ready = new SortedSet<int>(Enumerable.Range(0, count).Where(i => inDegree[i] == 0));
+            sorted = new LinkedList<int>();
+            while (ready.Count > 0)
+            {
+                var node = ready.Min;
+                ready.Remove(node);
+                sorted.AddLast(node);
+                foreach (var edge in edges[node])
+                    if (--inDegree[edge.To] == 0)
+                        ready.Add(edge.To);
+            }
+            return sorted.Count == count;
+        }
+
+        private LinkedList<int> SortByValuesAndFlows()
+        {
+            while (true)
+            {
+                var edges = CollectSortEdges();
+                if (TrySortByValuesAndFlows(edges, out var sorted))
+                    return sorted;
+
+                var flowEdge = FindFlowEdgeInCycle(edges, new HashSet<int>(Enumerable.Range(0, nodesToSerialize.Count).Except(sorted)));
+                if (!flowEdge.HasValue)
+                {
+                    Debug.LogError("Interactivity export: value connections form a cycle, nodes can't be ordered as required by the specification.");
+                    return PostTopologicalSort();
+                }
+
+                // Only happens when a node triggers a node whose output value it (indirectly) reads.
+                var edge = flowEdge.Value;
+                var source = nodesToSerialize[edge.From];
+                Debug.LogWarning($"Interactivity export: flow \"{edge.FlowSocket}\" of node {edge.From} ({source.Schema.Op}) " +
+                                 $"to node {edge.To} ({nodesToSerialize[edge.To].Schema.Op}) is part of a value/flow cycle " +
+                                 "and is routed through a custom event, so the target runs asynchronously.");
+                RouteFlowThroughEvent(source, source.FlowConnections[edge.FlowSocket]);
+            }
+        }
+
+        /// <summary> Finds a cycle between the given nodes and returns a flow connection on it (value connections can't be rerouted). </summary>
+        private static SortEdge? FindFlowEdgeInCycle(List<SortEdge>[] edges, HashSet<int> nodes)
+        {
+            // 0 = not visited, 1 = on the current path, 2 = done
+            var state = new Dictionary<int, int>();
+            var path = new List<SortEdge>();
+
+            SortEdge? Visit(int node)
+            {
+                state[node] = 1;
+                foreach (var edge in edges[node])
+                {
+                    if (!nodes.Contains(edge.To))
+                        continue;
+                    state.TryGetValue(edge.To, out var targetState);
+                    if (targetState == 1)
+                    {
+                        // Cycle: the edges on the path from edge.To to node, plus this edge
+                        var flowEdge = path.SkipWhile(e => e.From != edge.To).Append(edge)
+                            .Where(e => e.FlowSocket != null).Cast<SortEdge?>().FirstOrDefault();
+                        if (flowEdge.HasValue)
+                            return flowEdge;
+                        // Value-only cycle; keep searching for a cycle with a flow connection
+                        continue;
+                    }
+                    if (targetState == 0)
+                    {
+                        path.Add(edge);
+                        var result = Visit(edge.To);
+                        if (result.HasValue)
+                            return result;
+                        path.RemoveAt(path.Count - 1);
+                    }
+                }
+                state[node] = 2;
+                return null;
+            }
+
+            foreach (var node in nodes)
+            {
+                if (state.ContainsKey(node))
+                    continue;
+                var result = Visit(node);
+                if (result.HasValue)
+                    return result;
+            }
+            return null;
+        }
+
         protected LinkedList<int> PostTopologicalSort()
         {
             var sorted = new LinkedList<int>();
@@ -406,7 +787,12 @@ namespace UnityGLTF.Interactivity.Export
                     if (valueSocket.Value.Value != null)
                     {
                         if (valueSocket.Value.Type == -1)
-                            valueSocket.Value.Type = GltfTypes.TypeIndex(valueSocket.Value.GetType());
+                            valueSocket.Value.Type = GltfTypes.TypeIndex(valueSocket.Value.Value.GetType());
+                        usedTypeIndices.Add(valueSocket.Value.Type);
+                    }
+                    else if (valueSocket.Value.Node == null && valueSocket.Value.Type != -1)
+                    {
+                        // Type-default value, serialized with its type only
                         usedTypeIndices.Add(valueSocket.Value.Type);
                     }
                 
@@ -442,15 +828,24 @@ namespace UnityGLTF.Interactivity.Export
                     }
                 }
                 foreach (var valueSocket in node.ValueInConnection)
-                    if (valueSocket.Value.Value != null && valueSocket.Value.Type != -1)
+                    if ((valueSocket.Value.Value != null || valueSocket.Value.Node == null) && valueSocket.Value.Type != -1
+                        && typesIndexReplacement.ContainsKey(valueSocket.Value.Type))
                         valueSocket.Value.Type = typesIndexReplacement[valueSocket.Value.Type];
             }
             
             foreach (var variable in variables.Where( v => v.Type != -1))
                 variable.Type = typesIndexReplacement[variable.Type];
-            
+
+            var alreadyUpdated = new HashSet<GltfInteractivityNode.EventValues>();
+            // In case EventValues instances are shared betweens multiple events, we use a hashset here
             foreach (var customEventValue in customEvents.SelectMany(c => c.Values))
-                customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+            {
+                if (!alreadyUpdated.Contains(customEventValue.Value))
+                {
+                    customEventValue.Value.Type = typesIndexReplacement[customEventValue.Value.Type];
+                    alreadyUpdated.Add(customEventValue.Value);
+                }
+            }
 
             foreach (var declaration in opDeclarations.Where(d => d.inputValueSockets != null).SelectMany(d => d.inputValueSockets.Values)
                          .Concat(opDeclarations.Where(d => d.outputValueSockets != null).SelectMany(d => d.outputValueSockets.Values)))
@@ -461,69 +856,87 @@ namespace UnityGLTF.Interactivity.Export
      
         protected void CheckForCircularFlows()
         {
-            var visited = new Dictionary<int, bool>(nodesToSerialize.Count);
-            
+            // true = on the current DFS path, false = fully processed. Processed nodes must not be
+            // visited again: re-walking them enumerates every flow *path* instead of every node,
+            // which is exponential for graphs where branches join again (e.g. branch -> A/B -> C
+            // repeated in a chain) and makes the export appear to hang.
+            var onPath = new Dictionary<int, bool>(nodesToSerialize.Count);
+
+            // Returns true if the node is on the current path, i.e. the connection leading to it closes a cycle.
             bool Visit(int node)
             {
-                if (visited.TryGetValue(node, out var alreadyVisited))
-                {
-                    if (alreadyVisited)
-                        return true;
-                }
-                
-                if (!alreadyVisited)
-                {
-                    visited[node] = true;
+                if (onPath.TryGetValue(node, out var isOnPath))
+                    return isOnPath;
 
-                    // Get the dependencies from incoming connections and ignore self-references
-                    var currentNode = nodesToSerialize[node];
-                    foreach (var connection in currentNode.FlowConnections)
+                onPath[node] = true;
+
+                var currentNode = nodesToSerialize[node];
+                foreach (var connection in currentNode.FlowConnections.ToArray())
+                {
+                    if (connection.Value.Node != null && connection.Value.Node.HasValue && connection.Value.Node.Value < nodesToSerialize.Count)
                     {
-                        if (connection.Value.Node != null && connection.Value.Node.HasValue && connection.Value.Node.Value < nodesToSerialize.Count)
+                        if (Visit(connection.Value.Node.Value))
                         {
-                            if (Visit(connection.Value.Node.Value))
-                            {
-                                // Add Events because of cyclic dependency
-                                var eventId = AddEventWithIdIfNeeded($"CyclicDependency{connection.Value.Node.ToString()}from{node.ToString()}");
-                       
-                                var triggerEventNode = new GltfInteractivityExportNode(new Event_SendNode());
-                                triggerEventNode.Index = nodesToSerialize.Count;
-                                triggerEventNode.Configuration["event"].Value = eventId;
-                                nodesToSerialize.Add(triggerEventNode);
-                                
-                                var receiveEventNode = new GltfInteractivityExportNode(new Event_ReceiveNode());
-                                receiveEventNode.Index = nodesToSerialize.Count;
-                                receiveEventNode.Configuration["event"].Value = eventId;
-                                nodesToSerialize.Add(receiveEventNode);
-
-                                var receiveFlowOut = receiveEventNode.FlowConnections[Event_ReceiveNode.IdFlowOut];
-                                receiveFlowOut.Node = connection.Value.Node;
-                                receiveFlowOut.Socket = connection.Value.Socket;    
-
-                                connection.Value.Node = triggerEventNode.Index;
-                                connection.Value.Socket = Event_SendNode.IdFlowIn;
-                            }
+                            // Add Events because of cyclic dependency
+                            RouteFlowThroughEvent(currentNode, connection.Value);
                         }
                     }
-
-                    visited[node] = false;
                 }
 
+                onPath[node] = false;
                 return false;
             }
-            
+
+            // Start at the entries (nodes without incoming flows, e.g. events), so the connection that closes a cycle is
+            // the one going back (e.g. a loop's next step) and not one into the middle of a flow, which would run part of
+            // it later than the rest (e.g. a loop body after the check that waits for it).
+            var hasIncomingFlow = new HashSet<int>();
+            foreach (var node in nodesToSerialize)
+            foreach (var connection in node.FlowConnections.Values)
+                if (connection.Node != null && connection.Node.HasValue)
+                    hasIncomingFlow.Add(connection.Node.Value);
+
+            foreach (var node in nodesToSerialize.ToArray())
+                if (!hasIncomingFlow.Contains(node.Index))
+                    Visit(node.Index);
             foreach (var node in nodesToSerialize.ToArray())
                 Visit(node.Index);
 
         }
+
+        /// <summary>
+        /// Replaces the flow connection with event/send → event/receive using a new custom event, which breaks cycles.
+        /// Custom events are processed asynchronously, so the flow target no longer runs within the current flow.
+        /// </summary>
+        private void RouteFlowThroughEvent(GltfInteractivityExportNode sourceNode, GltfInteractivityNode.FlowSocketData connection)
+        {
+            var eventId = AddEventWithIdIfNeeded($"CyclicDependency{connection.Node.ToString()}from{sourceNode.Index.ToString()}");
+
+            var triggerEventNode = new GltfInteractivityExportNode(new Event_SendNode());
+            triggerEventNode.Index = nodesToSerialize.Count;
+            triggerEventNode.Configuration["event"].Value = eventId;
+            nodesToSerialize.Add(triggerEventNode);
+
+            var receiveEventNode = new GltfInteractivityExportNode(new Event_ReceiveNode());
+            receiveEventNode.Index = nodesToSerialize.Count;
+            receiveEventNode.Configuration["event"].Value = eventId;
+            nodesToSerialize.Add(receiveEventNode);
+
+            var receiveFlowOut = receiveEventNode.FlowConnections[Event_ReceiveNode.IdFlowOut];
+            receiveFlowOut.Node = connection.Node;
+            receiveFlowOut.Socket = connection.Socket;
+
+            connection.Node = triggerEventNode.Index;
+            connection.Socket = Event_SendNode.IdFlowIn;
+        }
         
-        public void RemoveNode(GltfInteractivityExportNode nodeToRemove)
+        public bool RemoveNode(GltfInteractivityExportNode nodeToRemove)
         {
             var indexToRemove = nodesToSerialize.IndexOf(nodeToRemove);
             if (indexToRemove == -1)
             {
                 Debug.LogError("Can't remove Node, not found in list!");
-                return;
+                return false;
             }
             // Safety check if there exist any connection to the removed node
             foreach (var n in nodesToSerialize)
@@ -533,7 +946,7 @@ namespace UnityGLTF.Interactivity.Export
                     if (valueSocket.Value.Node == indexToRemove)
                     {
                         Debug.LogError("Trying to remove an node, which is referenced in a value connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
-                        return;
+                        return false;
                     }
                 }
                 foreach (var flowSocket in n.FlowConnections)
@@ -541,7 +954,7 @@ namespace UnityGLTF.Interactivity.Export
                     if (flowSocket.Value.Node == indexToRemove)
                     {
                         Debug.LogError("Trying to remove an node, which is referenced in a flow connection. Schema: "+nodeToRemove.Schema.Op + ",  Referenced by " + n.Schema.Op);
-                        return;
+                        return false;
                     }
                 }
             }
@@ -550,7 +963,7 @@ namespace UnityGLTF.Interactivity.Export
             {
                 // Just remove, no other indices are affected
                 nodesToSerialize.RemoveAt(indexToRemove);
-                return;
+                return true;
             }
                 
             nodesToSerialize.RemoveAt(indexToRemove);
@@ -575,6 +988,7 @@ namespace UnityGLTF.Interactivity.Export
                         flowSocket.Value.Node = nodeToRemove.Index;
                 }
             }
+            return true;
         }
         
         protected void RemoveNodes(IReadOnlyList<GltfInteractivityExportNode> nodesToRemove)
@@ -763,6 +1177,20 @@ namespace UnityGLTF.Interactivity.Export
             return newNodes.ToArray();
         }
 
+        /// <summary>
+        /// Scalar type the value should be converted to when <paramref name="supportedTypes"/> does not accept it
+        /// (float preferred, then int, then bool), or null if there is no scalar conversion.
+        /// </summary>
+        private static string PreferredScalarConversion(string fromSignature, string[] supportedTypes)
+        {
+            if (fromSignature != GltfTypes.Int && fromSignature != GltfTypes.Float && fromSignature != GltfTypes.Bool)
+                return null;
+            foreach (var candidate in new[] { GltfTypes.Float, GltfTypes.Int, GltfTypes.Bool })
+                if (candidate != fromSignature && System.Array.IndexOf(supportedTypes, candidate) >= 0)
+                    return candidate;
+            return null;
+        }
+
         public void CheckForImplicitValueConversions()
         {
             var changed = true;
@@ -887,6 +1315,46 @@ namespace UnityGLTF.Interactivity.Export
                                 }
                             }
                         }
+                        else if (socket != null && socket.typeRestriction == null
+                                 && node.Schema.InputValueSockets.TryGetValue(valueSocket.Key, out var socketDescriptor)
+                                 && socketDescriptor.SupportedTypes != null
+                                 && socketDescriptor.SupportedTypes.Length < GltfTypes.allTypes.Length)
+                        {
+                            // No explicit restriction from the exporter, but the operation only accepts some types
+                            // (e.g. math/sin: float..float4). Convert scalars that are not accepted, e.g. int -> float.
+                            var valueType = GetValueTypeForInput(node, valueSocket.Key);
+                            if (valueType == -1)
+                                continue;
+                            var valueSignature = GltfTypes.TypesMapping[valueType].GltfSignature;
+                            if (System.Array.IndexOf(socketDescriptor.SupportedTypes, valueSignature) >= 0)
+                                continue;
+
+                            var targetSignature = PreferredScalarConversion(valueSignature, socketDescriptor.SupportedTypes);
+                            if (targetSignature == null)
+                                continue; // nothing sensible to convert to, the spec validator reports it
+
+                            if (socket.Value != null && GltfTypes.TryToConvertValue(socket.Value, targetSignature, out var convertedValue))
+                            {
+                                socket.Value = convertedValue;
+                                socket.Type = GltfTypes.TypeIndexByGltfSignature(targetSignature);
+                                changed = true;
+                                continue;
+                            }
+
+                            var conversionNode = AddTypeConversion(node, nodesToSerialize.Count, valueSocket.Key,
+                                valueType, GltfTypes.TypeIndexByGltfSignature(targetSignature));
+                            if (conversionNode != null && conversionNode.Length > 0)
+                            {
+                                changed = true;
+                                nodesToSerialize.AddRange(conversionNode);
+                            }
+                            else
+                            {
+                                Debug.LogWarning("Could not add type conversion for socket: " + valueSocket.Key +
+                                                 " in node: " + node.Schema.Op + ". Has Type " + valueSignature +
+                                                 " but should be one of " + string.Join(", ", socketDescriptor.SupportedTypes));
+                            }
+                        }
                     }
                 }
             }
@@ -935,7 +1403,7 @@ namespace UnityGLTF.Interactivity.Export
             return -1;
         }
         
-        public  int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
+        public int GetValueTypeForInput(GltfInteractivityNode node, string socketName, HashSet<GltfInteractivityNode.ValueSocketData> visited = null)
         {
             if (visited == null)
                 visited = new HashSet<GltfInteractivityNode.ValueSocketData>();
@@ -1133,6 +1601,21 @@ namespace UnityGLTF.Interactivity.Export
                 }
 
                 node.OpDeclaration = opIndex;
+            }
+        }
+        
+        protected void AddSelectabilityExtensionToInvisibleNodes()
+        {
+            // Ensure initial invisible nodes also gets unselectable 
+            
+            foreach (var node in this.exporter.GetRoot().Nodes)
+            {
+                if (node.Extensions != null && node.Extensions.TryGetValue(KHR_node_visibility_Factory.EXTENSION_NAME, out var nodeVisibilityExtension))
+                {
+                    var visible = (nodeVisibilityExtension as KHR_node_visibility).visible;
+                    if (!visible)
+                        AddSelectabilityExtensionToNode(node, visible);
+                }
             }
         }
     }

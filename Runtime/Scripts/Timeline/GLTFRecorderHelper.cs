@@ -21,7 +21,7 @@ namespace UnityGLTF.Timeline
         {
 	        if (instance != null) return instance;
 #if UNITY_2023_1_OR_NEWER
-	        instance = FindFirstObjectByType<GLTFRecorderHelper>();
+	        instance = FindAnyObjectByType<GLTFRecorderHelper>();
  #else
 	        instance = FindObjectOfType<GLTFRecorderHelper>();
 #endif

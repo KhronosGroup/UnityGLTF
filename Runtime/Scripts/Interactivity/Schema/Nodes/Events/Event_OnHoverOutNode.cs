@@ -9,13 +9,13 @@ namespace UnityGLTF.Interactivity.Schema
 
         [ConfigDescription]
         public const string IdConfigNodeIndex = "nodeIndex";
-        [ConfigDescription]
-        public const string IdConfigStopPropagation = "stopPropagation";
         [FlowOutSocketDescription]
         public const string IdFlowOut = "out";
-        [OutputSocketDescription(GltfTypes.Int)]
-        public const string IdOutHoverNodeIndex = "hoverNodeIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdOutHoverNodeRef = "hoveredNode";
         [OutputSocketDescription(GltfTypes.Int)]
         public const string IdOutControllerIndex = "controllerIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdEvent = "event";
     }
 }

@@ -37,7 +37,12 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             unitExporter.Context.ConvertValue(value, out _, out var valueTypeIndex);
-            
+            if (valueTypeIndex == -1)
+            {
+                UnitExportLogging.AddErrorLog(unit, "Unsupported or empty list item type.");
+                return false;
+            }
+
             var objectList = unitExporter.vsExportContext.CreateNewVariableBasedListFromUnit(unit, listCapacity, valueTypeIndex);
             
             ListHelpersVS.CreateListNodes(unitExporter, objectList);

@@ -62,25 +62,37 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             }
 
             var getMember = unit as GetMember;
-            if (getMember.member.info.IsStatic())
+            if (getMember.member.info.IsStatic()
+                && GetMemberGenericStaticValueExporter.CanBeExported(getMember.member.declaringType, getMember.member.name))
             {
                 // Fallback to export static values as Variables, e.g.: Mathf.Rad2Deg
                 return new GetMemberGenericStaticValueExporter();
             }
-            
+
             return null;
         }
     }
-    
+
     public class GetMemberGenericStaticValueExporter: IUnitExporter
     {
         public Type unitType { get; }
 
+        /// <summary>
+        /// Only constant-like static members can be baked into a variable at export time:
+        /// const/readonly fields (Mathf.PI, Mathf.Rad2Deg, float.MaxValue) and static properties of structs
+        /// (Vector3.zero, Quaternion.identity, Color.red).
+        /// Static properties of classes (Random.value, Time.frameCount, Screen.width, ...) change at runtime
+        /// and would be frozen to their editor value, so they need a dedicated exporter.
+        /// </summary>
         public static bool CanBeExported(Type declaringType, string memberName)
         {
             var field = declaringType.GetField(memberName);
-            if (field != null && field.IsStatic())
+            if (field != null && field.IsStatic)
+            {
+                if (!field.IsLiteral && !field.IsInitOnly)
+                    return false;
                 return field.GetValue(null) != null;
+            }
             else
             {
                 var property = declaringType.GetProperty(memberName);
@@ -89,7 +101,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
                 if (!property.IsStatic())
                     return false;
-                
+
+                if (!declaringType.IsValueType)
+                    return false;
+
                 return property.GetValue(null) != null;
             }
         }
@@ -97,6 +112,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as GetMember;
+            if (!CanBeExported(unit.member.declaringType, unit.member.name))
+            {
+                UnitExportLogging.AddErrorLog(unit, "Static member is not constant and can't be exported as a fixed value.");
+                return false;
+            }
 
             var varName = unit.member.name + "_" + unit.member.declaringType.Name;
             

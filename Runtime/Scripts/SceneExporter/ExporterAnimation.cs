@@ -702,12 +702,17 @@ namespace UnityGLTF
 		private static string LogObject(object obj)
 		{
 			if (obj == null) return "null";
-
+#if UNITY_6000_4_OR_NEWER
+			if (obj is Component tr)
+				return $"{tr.name} (EntityID: {tr.GetEntityId()}, Type: {tr.GetType()})";
+			if (obj is GameObject go)
+				return $"{go.name} (EntityID: {go.GetEntityId()})";
+#else
 			if (obj is Component tr)
 				return $"{tr.name} (InstanceID: {tr.GetInstanceID()}, Type: {tr.GetType()})";
 			if (obj is GameObject go)
 				return $"{go.name} (InstanceID: {go.GetInstanceID()})";
-
+#endif
 			return obj.ToString();
 		}
 
@@ -785,7 +790,7 @@ namespace UnityGLTF
 					Transform targetTr = target.Length > 0 ? transform.Find(target) : transform;
 					int newTargetId = targetTr ? GetTransformIndex(targetTr) : -1;
 
-					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !settings.ExportDisabledGameObjects;
+					var targetTrShouldNotBeExported = targetTr && !targetTr.gameObject.activeInHierarchy && !exportDisabledGameObjects;
 
 					if (hadAlreadyExportedThisBindingBefore && newTargetId < 0)
 					{
@@ -1442,10 +1447,13 @@ namespace UnityGLTF
 				interpolationType = InterpolationType.STEP;
 			
 			// Assuming all the curves exist now
-			for (var i = 0; i < nbSamples; ++i)
+			// nbSamples is the number of intervals, so there is one more sample than that (the last one at the end of the clip).
+			// A clip without length only has the one sample.
+			var lastSample = length > 0 ? nbSamples : 0;
+			for (var i = 0; i <= lastSample; ++i)
 			{
 				var time = i * deltaTime;
-				if (i == nbSamples - 1) time = length;
+				if (i == lastSample) time = length;
 
 				for (var k = 0; k < curveCount; k++)
 					while (keyframeIndex[k] < keyframes[k].Length - 1 && keyframes[k][keyframeIndex[k]].time < time)
@@ -1458,12 +1466,21 @@ namespace UnityGLTF
 						isConstant |= float.IsInfinity(keyframes[k][keyframeIndex[k]].inTangent);
 				}
 
-				if (isConstant && _times.Count > 0)
+				if (isConstant && _times.Count > 0 && i == lastSample)
+				{
+					// The previous interval already holds its value until just before the end, only the end value is missing
+					var lastTime = _times[_times.Count - 1];
+					if (lastTime < time / speedMultiplier)
+					{
+						_times.Add(time / speedMultiplier);
+						if (!AddValue(time)) return false;
+					}
+				}
+				else if (isConstant && _times.Count > 0)
 				{
 					var lastTime = _times[_times.Count - 1];
 					var t0 = lastTime + 0.0001f;
-					if (i != nbSamples - 1)
-						time += deltaTime * 0.999f;
+					time += deltaTime * 0.999f;
 					_times.Add(t0 / speedMultiplier);
 					_times.Add(time / speedMultiplier);
 					var success = AddValue(time);
@@ -1587,27 +1604,36 @@ namespace UnityGLTF
 			return -1;
 		}
 
+		private int GetObjectId(Object obj)
+		{
+#if UNITY_6000_4_OR_NEWER
+			return obj.GetEntityId().GetHashCode();
+#else
+			return obj.GetInstanceID();
+#endif
+		}
+		
 		public int GetTransformIndex(Transform transform)
 		{
-			if (transform && _exportedTransforms.TryGetValue(transform.GetInstanceID(), out var index)) return index;
+			if (transform && _exportedTransforms.TryGetValue(GetObjectId(transform), out var index)) return index;
 			return -1;
 		}
 
 		public int GetMaterialIndex(Material mat)
 		{
-			if (mat && _exportedMaterials.TryGetValue(mat.GetInstanceID(), out var index)) return index;
+			if (mat && _exportedMaterials.TryGetValue(GetObjectId(mat), out var index)) return index;
 			return -1;
 		}
 
 		public int GetLightIndex(Light light)
 		{
-			if (light && _exportedLights.TryGetValue(light.GetInstanceID(), out var index)) return index;
+			if (light && _exportedLights.TryGetValue(GetObjectId(light), out var index)) return index;
 			return -1;
 		}
 
 		public int GetCameraIndex(Camera cam)
 		{
-			if (cam && _exportedCameras.TryGetValue(cam.GetInstanceID(), out var index)) return index;
+			if (cam && _exportedCameras.TryGetValue(GetObjectId(cam), out var index)) return index;
 			return -1;
 		}
 
@@ -1620,7 +1646,33 @@ namespace UnityGLTF
 			}
 		}
 
+		/// <summary>
+		/// Splits an HDR emission color into a color with components up to 1 and a strength (KHR_materials_emissive_strength).
+		/// Emission colors are HDR color properties, which Unity passes to shaders without color space conversion,
+		/// so they are already linear like glTF's emissiveFactor: color = input / max, strength = max.
+		/// </summary>
 		private static void DecomposeEmissionColor(Color input, out Color output, out float intensity)
+		{
+			output = input;
+			output.a = Mathf.Clamp01(output.a);
+			intensity = Mathf.Max(input.r, input.g, input.b);
+			if (intensity > 1)
+			{
+				output.r /= intensity;
+				output.g /= intensity;
+				output.b /= intensity;
+			}
+			else
+			{
+				intensity = 1;
+			}
+		}
+
+		/// <summary>
+		/// The previous decomposition, still used for Standard and URP materials in Gamma color space,
+		/// where these shaders treat emission colors differently (see ExportMaterial).
+		/// </summary>
+		private static void DecomposeEmissionColorGammaColorSpace(Color input, out Color output, out float intensity)
 		{
 			var emissiveAmount = input.linear;
 			var maxEmissiveAmount = Mathf.Max(emissiveAmount.r, emissiveAmount.g, emissiveAmount.b);
@@ -1708,7 +1760,8 @@ namespace UnityGLTF
 					var isIdentical = ArrayRangeEquals(values, arraySize, lastExportedIndex * arraySize, (i - 1) * arraySize, i * arraySize, (i + 1) * arraySize);
 					if (!isIdentical)
 					{
-						Array.Copy(values, (i - 1) * arraySize, singleFrameWeights, 0, arraySize);
+						lastExportedIndex = i;
+						Array.Copy(values, i * arraySize, singleFrameWeights, 0, arraySize);
 						v2.AddRange(singleFrameWeights);
 						t2.Add(times[i]);
 					}
@@ -1718,8 +1771,8 @@ namespace UnityGLTF
 
 				var max = times.Length - 1;
 				t2.Add(times[max]);
-				var skipped = values.Skip((max - 1) * arraySize).ToArray();
-				v2.AddRange(skipped.Take(arraySize));
+				Array.Copy(values, max * arraySize, singleFrameWeights, 0, arraySize);
+				v2.AddRange(singleFrameWeights);
 			}
 
 			times = t2.ToArray();

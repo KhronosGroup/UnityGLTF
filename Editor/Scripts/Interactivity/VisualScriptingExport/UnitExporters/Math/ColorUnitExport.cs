@@ -26,12 +26,13 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             colorNode.ValueIn(Math_Combine4Node.IdValueB).MapToInputPort(unit.valueInputs["%g"]);
             colorNode.ValueIn(Math_Combine4Node.IdValueC).MapToInputPort(unit.valueInputs["%b"]);
             if (unit.valueInputs.Contains("%a"))
-                colorNode.ValueIn(Math_Combine4Node.IdValueA).MapToInputPort(unit.valueInputs["%a"]);
+                colorNode.ValueIn(Math_Combine4Node.IdValueD).MapToInputPort(unit.valueInputs["%a"]);
             else
                 colorNode.ValueIn(Math_Combine4Node.IdValueD).SetValue(1f);
 
             colorNode.FirstValueOut().MapToPort(unit.result);
 
+            unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;
         }
     }

@@ -26,9 +26,33 @@ namespace UnityGLTF
 		internal void CollectClipCurvesBySampling(GameObject root, AnimationClip clip, Dictionary<string, TargetCurveSet> targetCurves)
 		{
 			var recorder = new GLTFRecorder(root.transform, false, false, false);
+			var animator = root.GetComponent<Animator>();
+
+			// The clip is sampled from a copy with changed settings if needed:
+			// - glTF has no root motion. When the Animator applies it, it's baked into the pose, so the skeleton carries the
+			//   motion (as authored) instead of the Animator's own transform: a track for that would override where the root node is placed.
+			// - A looping clip wraps around at its end, so its last frame would be sampled as the first one.
+			var bakeRootMotion = clip.isHumanMotion && animator && animator.applyRootMotion;
+			var sampledClip = clip;
+			if (bakeRootMotion || clip.isLooping)
+			{
+				sampledClip = Object.Instantiate(clip);
+				var clipSettings = AnimationUtility.GetAnimationClipSettings(sampledClip);
+				clipSettings.loopTime = false;
+				if (bakeRootMotion)
+				{
+					clipSettings.loopBlendOrientation = clipSettings.loopBlendPositionY = clipSettings.loopBlendPositionXZ = true;
+					clipSettings.keepOriginalOrientation = clipSettings.keepOriginalPositionY = clipSettings.keepOriginalPositionXZ = true;
+				}
+				AnimationUtility.SetAnimationClipSettings(sampledClip, clipSettings);
+			}
 
 			var playableGraph = PlayableGraph.Create();
-			var animationClipPlayable = (Playable) AnimationClipPlayable.Create(playableGraph, clip);
+			var clipPlayable = AnimationClipPlayable.Create(playableGraph, sampledClip);
+			// Export the clip's own pose. Foot IK is on by default for clip playables, and it can bend the legs
+			// (e.g. stretched legs can't fully reach their goals).
+			clipPlayable.SetApplyFootIK(false);
+			var animationClipPlayable = (Playable) clipPlayable;
 
 #if UNITY_2020_2_OR_NEWER
 			var rigs = root.GetComponents<IAnimationWindowPreview>();
@@ -47,7 +71,23 @@ namespace UnityGLTF
 			}
 #endif
 
-			var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", root.GetComponent<Animator>());
+			// A humanoid clip only moves the human bones and the transforms it has its own curves for. Recording only those
+			// avoids constant tracks for every other node (meshes, props, extra bones). Rigs can move anything, though.
+			var avatar = animator ? animator.avatar : null;
+			if (clip.isHumanMotion && rigs.Length == 0 && avatar && avatar.isHuman)
+			{
+				var boneNames = new HashSet<string>(avatar.humanDescription.human.Select(b => b.boneName));
+				var recorded = new HashSet<Transform>(root.GetComponentsInChildren<Transform>(true).Where(t => boneNames.Contains(t.name)));
+				foreach (var binding in AnimationUtility.GetCurveBindings(clip))
+				{
+					if (binding.type != typeof(Transform)) continue;
+					var target = root.transform.Find(binding.path);
+					if (target) recorded.Add(target);
+				}
+				recorder.recordingList = recorded;
+			}
+
+			var playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
 			playableOutput.SetSourcePlayable(animationClipPlayable);
 			playableGraph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
 
@@ -70,6 +110,10 @@ namespace UnityGLTF
 			// limitations of AnimationMode - otherwise prefab modifications will persist...
 			var isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(root);
 			var prefabModifications = isPrefabAsset ? PrefabUtility.GetPropertyModifications(root) : default;
+			// Record the sampling in its own undo group, so reverting it below doesn't also undo earlier changes
+			// (e.g. creating the AnimatorController states the clips are exported from)
+			Undo.IncrementCurrentGroup();
+			var undoGroup = Undo.GetCurrentGroup();
 			Undo.RegisterFullObjectHierarchyUndo(root, "Animation Sampling");
 
 			// add the root since we need to shift it around -
@@ -140,7 +184,10 @@ namespace UnityGLTF
 			// seems to be necessary because the animation sampling API doesn't fully work;
 			// sometimes samples still "leak" into property modifications
 			Undo.FlushUndoRecordObjects();
-			Undo.PerformUndo();
+			Undo.RevertAllDownToGroup(undoGroup);
+
+			playableGraph.Destroy();
+			if (sampledClip != clip) Object.DestroyImmediate(sampledClip);
 
 			recorder.EndRecording(out var data);
 			if (data == null || !data.Any()) return;
@@ -159,6 +206,9 @@ namespace UnityGLTF
 			// and other cases that can go wrong.
 			foreach (var kvp in data)
 			{
+				// The root is only moved to the origin for the sampling (see above), humanoid clips don't animate it
+				if (clip.isHumanMotion && kvp.Key == root.transform) continue;
+
 				var curveSet = new TargetCurveSet();
 				curveSet.Init();
 

@@ -159,6 +159,7 @@ namespace UnityGLTF
 				{
 					var emissiveAmount = Color.black;
 					var maxEmissiveAmount = 0f;
+					var emissiveAmountIsLinear = false;
 					if (materialObj.HasProperty("_UseEmissiveIntensity"))
 					{
 						// hdrp route uses its own color decomposition
@@ -178,10 +179,18 @@ namespace UnityGLTF
 						var c = materialObj.HasProperty("emissiveFactor") ? materialObj.GetColor("emissiveFactor") :
 							materialObj.HasProperty("_EmissionColor") ? materialObj.GetColor("_EmissionColor") :
 							materialObj.GetColor("_EmissiveFactor");
-						DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
+						if (isUnityMaterialWithWeirdColorspaceHandling)
+						{
+							DecomposeEmissionColorGammaColorSpace(c, out emissiveAmount, out maxEmissiveAmount);
+						}
+						else
+						{
+							DecomposeEmissionColor(c, out emissiveAmount, out maxEmissiveAmount);
+							emissiveAmountIsLinear = true;
+						}
 					}
-					
-					if (isUnityMaterialWithWeirdColorspaceHandling)
+
+					if (isUnityMaterialWithWeirdColorspaceHandling || emissiveAmountIsLinear)
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorRaw();
 					else
 						material.EmissiveFactor = emissiveAmount.ToNumericsColorGamma();
@@ -387,7 +396,7 @@ namespace UnityGLTF
 
         private MaterialId CreateAndAddMaterialId(Material materialObj, GLTFMaterial material)
         {
-	        var key = materialObj ? materialObj.GetInstanceID() : 0;
+	        var key = materialObj ? GetObjectId(materialObj) : 0;
 	        if(!_exportedMaterials.ContainsKey(key))
 				_exportedMaterials.Add(key, _root.Materials.Count);
 

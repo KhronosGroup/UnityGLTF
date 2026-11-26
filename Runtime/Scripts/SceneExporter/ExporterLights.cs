@@ -86,7 +86,7 @@ namespace UnityGLTF
             };
 
             // Register nodes for animation parsing (could be disabled if animation is disabled)
-            _exportedLights.Add(unityLight.GetInstanceID(), _root.Lights.Count);
+            _exportedLights.Add(GetObjectId(unityLight), _root.Lights.Count);
 
             //list of lightids should be in extensions object
             _root.Lights.Add(light);

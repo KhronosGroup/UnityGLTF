@@ -14,7 +14,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine3Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4Node>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Matrix4x4), ".ctor", new GenericInvokeMathInvokeUnitExporters<Math_Combine4x4Node>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sin), new GenericInvokeMathInvokeUnitExporters<Math_SinNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Cos), new GenericInvokeMathInvokeUnitExporters<Math_CosNode>());
@@ -23,7 +22,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Acos), new GenericInvokeMathInvokeUnitExporters<Math_AcosNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Atan), new GenericInvokeMathInvokeUnitExporters<Math_AtanNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Exp), new GenericInvokeMathInvokeUnitExporters<Math_ExpNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Log), new GenericInvokeMathInvokeUnitExporters<Math_LogNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Log10), new GenericInvokeMathInvokeUnitExporters<Math_Log10Node>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sqrt), new GenericInvokeMathInvokeUnitExporters<Math_SqrtNode>());
             
@@ -34,11 +32,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
 
             InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Dot), new GenericInvokeMathInvokeUnitExporters<Math_DotNode>());
             
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Sign), new GenericInvokeMathInvokeUnitExporters<Math_SignNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Floor), new GenericInvokeMathInvokeUnitExporters<Math_FloorNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Ceil), new GenericInvokeMathInvokeUnitExporters<Math_CeilNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Round), new GenericInvokeMathInvokeUnitExporters<Math_RoundNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.RoundToInt), new GenericInvokeMathInvokeUnitExporters<Type_FloatToIntNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Clamp01), new GenericInvokeMathInvokeUnitExporters<Math_SaturateNode>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.Abs), new GenericInvokeMathInvokeUnitExporters<Math_AbsNode>());
@@ -49,7 +44,6 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.SlerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_SlerpNode>());
             
             InvokeUnitExport.RegisterInvokeExporter(typeof(Mathf), nameof(Mathf.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector2), nameof(Vector2.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector3), nameof(Vector3.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());
             InvokeUnitExport.RegisterInvokeExporter(typeof(Vector4), nameof(Vector4.LerpUnclamped), new GenericInvokeMathInvokeUnitExporters<Math_MixNode>());

@@ -33,13 +33,13 @@ namespace GLTF.Schema
 		/// The offset into the buffer in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public uint ByteOffset;
+		public long ByteOffset;
 
 		/// <summary>
 		/// The length of the bufferView in bytes.
 		/// <minimum>0</minimum>
 		/// </summary>
-		public uint ByteLength;
+		public long ByteLength;
 
 		/// <summary>
 		/// The stride, in bytes, between vertex attributes or other interleavable data.

@@ -17,6 +17,8 @@ namespace UnityGLTF.Interactivity.Export
             CleanUpRegistry.RegisterCleanUp(new MathCleanUp());
         }
 
+        private const string ResultSocket = "value";
+
         private static bool IsZero(object value)
         {
             if (value == null)
@@ -163,6 +165,95 @@ namespace UnityGLTF.Interactivity.Export
             }
         }
 
+        // The spec's float is a double, so results are calculated in double and only stored as float.
+        // A result which underflows to zero as float (but not as double) would change comparisons at runtime,
+        // so it becomes NaN, which keeps the node (see PreCalc). Overflow to infinity is kept the same way.
+        private static float ToFloat(double value)
+        {
+            var f = (float)value;
+            return f == 0 && value != 0 ? float.NaN : f;
+        }
+
+        private static MathCalcAbstract[] PerComponent<TSchema>(Func<double, double> op) where TSchema : GltfInteractivityNodeSchema
+        {
+            float F(float v) => ToFloat(op(v));
+            return new MathCalcAbstract[]
+            {
+                new MathCalc<TSchema, float, float> { Op = F },
+                new MathCalc<TSchema, Vector2, Vector2> { Op = v => new Vector2(F(v.x), F(v.y)) },
+                new MathCalc<TSchema, Vector3, Vector3> { Op = v => new Vector3(F(v.x), F(v.y), F(v.z)) },
+                new MathCalc<TSchema, Vector4, Vector4> { Op = v => new Vector4(F(v.x), F(v.y), F(v.z), F(v.w)) },
+            };
+        }
+
+        private static MathCalcAbstract[] PerComponent<TSchema>(Func<double, double, double> op) where TSchema : GltfInteractivityNodeSchema
+        {
+            float F(float a, float b) => ToFloat(op(a, b));
+            return new MathCalcAbstract[]
+            {
+                new MathCalc<TSchema, float, float, float> { Op = F },
+                new MathCalc<TSchema, Vector2, Vector2, Vector2> { Op = (a, b) => new Vector2(F(a.x, b.x), F(a.y, b.y)) },
+                new MathCalc<TSchema, Vector3, Vector3, Vector3> { Op = (a, b) => new Vector3(F(a.x, b.x), F(a.y, b.y), F(a.z, b.z)) },
+                new MathCalc<TSchema, Vector4, Vector4, Vector4> { Op = (a, b) => new Vector4(F(a.x, b.x), F(a.y, b.y), F(a.z, b.z), F(a.w, b.w)) },
+            };
+        }
+
+        // math/normalize: zero or non-finite length results in positive zeros (isValid = false)
+        private static float[] Normalize(params float[] v)
+        {
+            double sqr = 0;
+            foreach (var c in v)
+                sqr += (double)c * c;
+            var length = Math.Sqrt(sqr);
+            var result = new float[v.Length];
+            if (length == 0 || double.IsNaN(length) || double.IsInfinity(length))
+                return result;
+            for (int i = 0; i < v.Length; i++)
+                result[i] = ToFloat(v[i] / length);
+            return result;
+        }
+
+        private static bool IsNegative(double x) => BitConverter.DoubleToInt64Bits(x) < 0;
+
+        // math/min and math/max: NaN propagates and negative zero is less than positive zero
+        private static double Min(double a, double b)
+        {
+            if (double.IsNaN(a) || double.IsNaN(b))
+                return double.NaN;
+            if (a == b)
+                return IsNegative(a) ? a : b;
+            return a < b ? a : b;
+        }
+
+        private static double Max(double a, double b)
+        {
+            if (double.IsNaN(a) || double.IsNaN(b))
+                return double.NaN;
+            if (a == b)
+                return IsNegative(a) ? b : a;
+            return a > b ? a : b;
+        }
+
+        // math/fract is in [0, 1), but for a tiny negative input the result would round up to 1 as float
+        private static double Fract(double x)
+        {
+            var r = x - Math.Floor(x);
+            return (float)r >= 1f ? double.NaN : r;
+        }
+
+        // log(1 + u) without losing a small u
+        private static double Log1p(double u)
+        {
+            var w = 1d + u;
+            return w == 1d ? u : Math.Log(w) * u / (w - 1d);
+        }
+
+        // x == 0 returns x, so ±0 keeps its sign. No Math.Sign here, it throws on NaN
+        private static double Cbrt(double x) => x == 0 ? x : x < 0 ? -Math.Pow(-x, 1d / 3d) : Math.Pow(x, 1d / 3d);
+        private static double Asinh(double x) => x == 0 ? x : x < 0 ? -Asinh(-x) : Log1p(x + x * x / (1d + Math.Sqrt(1d + x * x)));
+        private static double Acosh(double x) => Math.Log(x + Math.Sqrt(x * x - 1d));
+        private static double Atanh(double x) => x == 0 ? x : 0.5d * Log1p(2d * x / (1d - x));
+
         private static MathCalcAbstract[] ops = new MathCalcAbstract[]
         {
             new MathCalc<Math_AddNode, float, float, float> { Op = (f, f1) => f + f1 },
@@ -173,9 +264,8 @@ namespace UnityGLTF.Interactivity.Export
             new MathCalc<Math_SubNode, Vector2, Vector2, Vector2> { Op = (f, f1) => f - f1 },
             new MathCalc<Math_SubNode, Vector3, Vector3, Vector3> { Op = (f, f1) => f - f1 },
             new MathCalc<Math_SubNode, Vector4, Vector4, Vector4> { Op = (f, f1) => f - f1 },
-            new MathCalc<Math_MulNode, float, float, float> { Op = (f, f1) => f * f1 },
-            new MathCalc<Math_MulNode, Vector2, Vector2, Vector2> { Op = (f, f1) => f * f1 },
-            new MathCalc<Math_DivNode, float, float, float> { Op = (f, f1) => f / f1 },
+            // math/mul is component-wise, so no Unity operator (Quaternion * is the Hamilton product). float to float4: see PerComponent below
+            new MathCalc<Math_MulNode, Quaternion, Quaternion, Quaternion> { Op = (f, f1) => new Quaternion(ToFloat((double)f.x * f1.x), ToFloat((double)f.y * f1.y), ToFloat((double)f.z * f1.z), ToFloat((double)f.w * f1.w)) },
             new MathCalc<Math_DotNode, Vector2, Vector2, float> { Op = Vector2.Dot},
             new MathCalc<Math_DotNode, Vector3, Vector3, float> { Op = Vector3.Dot},
             new MathCalc<Math_DotNode, Vector4, Vector4, float> { Op = Vector4.Dot},
@@ -194,7 +284,79 @@ namespace UnityGLTF.Interactivity.Export
             new MathCalc<Math_AtanNode, float, float> { Op = Mathf.Atan},
             new MathCalc<Math_Atan2Node, float, float, float> { Op = Mathf.Atan2},
             new MathCalc<Math_AsinNode, float, float> { Op = Mathf.Asin},
-        };
+
+            // int ops wrap around like in the spec (32-bit two's complement)
+            new MathCalc<Math_AddNode, int, int, int> { Op = (a, b) => unchecked(a + b) },
+            new MathCalc<Math_SubNode, int, int, int> { Op = (a, b) => unchecked(a - b) },
+            new MathCalc<Math_MulNode, int, int, int> { Op = (a, b) => unchecked(a * b) },
+            new MathCalc<Math_NegNode, int, int> { Op = a => unchecked(-a) },
+            new MathCalc<Math_AbsNode, int, int> { Op = a => a < 0 ? unchecked(-a) : a },
+            new MathCalc<Math_MinNode, int, int, int> { Op = Math.Min },
+            new MathCalc<Math_MaxNode, int, int, int> { Op = Math.Max },
+            // Division by zero results in 0, int.MinValue % -1 would throw in C#
+            new MathCalc<Math_RemNode, int, int, int> { Op = (a, b) => b == 0 || b == -1 ? 0 : a % b },
+
+            // Products of floats are exact in double, so only the subtraction is rounded like at runtime
+            new MathCalc<Math_CrossNode, Vector3, Vector3, Vector3> { Op = (a, b) => new Vector3(
+                ToFloat((double)a.y * b.z - (double)a.z * b.y),
+                ToFloat((double)a.z * b.x - (double)a.x * b.z),
+                ToFloat((double)a.x * b.y - (double)a.y * b.x)) },
+            new MathCalc<Math_NormalizeNode, float, float> { Op = v => Normalize(v)[0] },
+            new MathCalc<Math_NormalizeNode, Vector2, Vector2> { Op = v => { var n = Normalize(v.x, v.y); return new Vector2(n[0], n[1]); } },
+            new MathCalc<Math_NormalizeNode, Vector3, Vector3> { Op = v => { var n = Normalize(v.x, v.y, v.z); return new Vector3(n[0], n[1], n[2]); } },
+            new MathCalc<Math_NormalizeNode, Vector4, Vector4> { Op = v => { var n = Normalize(v.x, v.y, v.z, v.w); return new Vector4(n[0], n[1], n[2], n[3]); } },
+
+            // Exact component comparison, Unity's Vector ==/Quaternion == are approximations
+            new MathCalc<Math_EqNode, bool, bool, bool> { Op = (a, b) => a == b },
+            new MathCalc<Math_EqNode, int, int, bool> { Op = (a, b) => a == b },
+            new MathCalc<Math_EqNode, float, float, bool> { Op = (a, b) => a == b },
+            new MathCalc<Math_EqNode, Vector2, Vector2, bool> { Op = (a, b) => a.x == b.x && a.y == b.y },
+            new MathCalc<Math_EqNode, Vector3, Vector3, bool> { Op = (a, b) => a.x == b.x && a.y == b.y && a.z == b.z },
+            new MathCalc<Math_EqNode, Vector4, Vector4, bool> { Op = (a, b) => a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w },
+            new MathCalc<Math_EqNode, Quaternion, Quaternion, bool> { Op = (a, b) => a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w },
+            new MathCalc<Math_LtNode, int, int, bool> { Op = (a, b) => a < b },
+            new MathCalc<Math_LtNode, float, float, bool> { Op = (a, b) => a < b },
+            new MathCalc<Math_LeNode, int, int, bool> { Op = (a, b) => a <= b },
+            new MathCalc<Math_LeNode, float, float, bool> { Op = (a, b) => a <= b },
+            new MathCalc<Math_GtNode, int, int, bool> { Op = (a, b) => a > b },
+            new MathCalc<Math_GtNode, float, float, bool> { Op = (a, b) => a > b },
+            new MathCalc<Math_GeNode, int, int, bool> { Op = (a, b) => a >= b },
+            new MathCalc<Math_GeNode, float, float, bool> { Op = (a, b) => a >= b },
+
+            // bool: logical, int: bitwise
+            new MathCalc<Math_AndNode, bool, bool, bool> { Op = (a, b) => a && b },
+            new MathCalc<Math_AndNode, int, int, int> { Op = (a, b) => a & b },
+            new MathCalc<Math_OrNode, bool, bool, bool> { Op = (a, b) => a || b },
+            new MathCalc<Math_OrNode, int, int, int> { Op = (a, b) => a | b },
+            new MathCalc<Math_XorNode, bool, bool, bool> { Op = (a, b) => a != b },
+            new MathCalc<Math_XorNode, int, int, int> { Op = (a, b) => a ^ b },
+            new MathCalc<Math_NotNode, bool, bool> { Op = a => !a },
+            new MathCalc<Math_NotNode, int, int> { Op = a => ~a },
+        }
+        .Concat(PerComponent<Math_MulNode>((a, b) => a * b))
+        .Concat(PerComponent<Math_DivNode>((a, b) => a / b))
+        .Concat(PerComponent<Math_NegNode>(x => -x))
+        .Concat(PerComponent<Math_AbsNode>(Math.Abs))
+        .Concat(PerComponent<Math_FloorNode>(Math.Floor))
+        .Concat(PerComponent<Math_CeilNode>(Math.Ceiling))
+        .Concat(PerComponent<Math_TruncNode>(Math.Truncate))
+        .Concat(PerComponent<Math_FractNode>(Fract))
+        .Concat(PerComponent<Math_AcosNode>(Math.Acos))
+        .Concat(PerComponent<Math_LogNode>(x => Math.Log(x)))
+        .Concat(PerComponent<Math_Log2Node>(x => Math.Log(x) / Math.Log(2d)))
+        .Concat(PerComponent<Math_Log10Node>(Math.Log10))
+        .Concat(PerComponent<Math_CbrtNode>(Cbrt))
+        .Concat(PerComponent<Math_SinHNode>(Math.Sinh))
+        .Concat(PerComponent<Math_CosHNode>(Math.Cosh))
+        .Concat(PerComponent<Math_TanHNode>(Math.Tanh))
+        .Concat(PerComponent<Math_AsinHNode>(Asinh))
+        .Concat(PerComponent<Math_AcosHNode>(Acosh))
+        .Concat(PerComponent<Math_AtanHNode>(Atanh))
+        .Concat(PerComponent<Math_MinNode>(Min))
+        .Concat(PerComponent<Math_MaxNode>(Max))
+        // C# % is a truncated remainder (fmod) like JS %, NaN for b = ±0
+        .Concat(PerComponent<Math_RemNode>((a, b) => a % b))
+        .ToArray();
         
         private bool PreCalc(GltfInteractivityNode n, out object result)
         {
@@ -205,7 +367,8 @@ namespace UnityGLTF.Interactivity.Export
                 return false;
 
             result = opsFound.Result(n);
-            return true;
+            // NaN and Infinity can't be stored as a constant value in json, so keep the runtime calculation
+            return !GltfInteractivityNode.ValueSerializer.HasNonFiniteComponents(result);
         }
         
         public void OnCleanUp(CleanUpTask task)
@@ -218,6 +381,11 @@ namespace UnityGLTF.Interactivity.Export
             {
                 bool anyConnection = node.ValueInConnection.Any(v => v.Value.Node != null && v.Value.Node != -1);
                 if (anyConnection)
+                    continue;
+
+                // The pre calculated result only replaces the "value" output (e.g. math/normalize also has isValid)
+                bool usesOtherOutput = nodes.Any(n => n.ValueInConnection.Values.Any(v => v.Node == node.Index && v.Socket != ResultSocket));
+                if (usesOtherOutput)
                     continue;
 
                 if (PreCalc(node, out var result))

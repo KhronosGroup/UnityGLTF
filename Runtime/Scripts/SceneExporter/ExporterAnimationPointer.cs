@@ -86,22 +86,36 @@ namespace UnityGLTF
 				{
 					if (go.CompareTag("EditorOnly"))
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (EditorOnly). Remove the EditorOnly tag when you want to export the GameObject. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					if (!go.activeSelf || !go.activeInHierarchy)
 					{
+#if UNITY_6000_4_OR_NEWER
+						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 						Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported. Enable the GameObject when you want to export it or enable 'Export disabled Game Objects' in the settings. (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 						return;
 					}
 					
 				}
+#if UNITY_6000_4_OR_NEWER
+				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (EntityId: {animatedObject.GetEntityId()})", animatedObject);
+#else
 				Debug.LogWarning(null, $"Animation for {animatedObject.name} ({animatedObject.GetType()}) has not been exported as the object itself is not exported (disabled/EditorOnly). (InstanceID: {animatedObject.GetInstanceID()})", animatedObject);
+#endif
 				return;
 			}
 
 			bool flipValueRange = false;
 			float? valueMultiplier = null;
+			// Morph target weights: one multiplier per blend shape, the values are the weights of all blend shapes per keyframe
+			float[] weightMultipliers = null;
 			bool isTextureTransform = false;
 			bool keepColorAlpha = true;
 			bool convertToLinearColor = false;
@@ -170,9 +184,26 @@ namespace UnityGLTF
 
 					if (!ShouldMaterialPropertiesRemapped(material))
 						break;
-					
-					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material, propertyName, out MaterialPointerPropertyMap map))
-						break;
+
+					if (!animationPointerExportContext.materialPropertiesRemapper.GetMapFromUnityMaterial(material,
+						    propertyName, out MaterialPointerPropertyMap map))
+					{
+						if (animationPointerExportContext.materialPropertiesRemapper.GetMapByUnityProperty(
+							    propertyName, out MaterialPointerPropertyMap existingMap))
+						{
+							var isTexTransform = existingMap.PropertyType == MaterialPointerPropertyMap.PropertyTypeOption.TextureTransform;
+
+							Debug.Log(LogType.Warning,
+								$"Animation property skipped: {propertyName} on material {material} - missing property "
+								+ (isTexTransform ? "or no texture assigned" : ""));
+						}
+						else
+							Debug.Log(LogType.Warning, $"Animation property skipped: {propertyName} on material {material} - no mapping found ");
+						
+						// We skip this property entirely if we don't have a mapping for it.'
+						// Also for Texture Transforms: when no Texture is assigned, we skip here too.
+						return;
+					}
 					
 					secondPropertyName = map.GltfSecondaryPropertyName;
 					propertyName = map.GltfPropertyName;
@@ -261,11 +292,6 @@ namespace UnityGLTF
 					}
 					break;
 				case SkinnedMeshRenderer skinnedMesh:
-					// this code is adapted from SkinnedMeshRendererEditor (which calculates the right range for sliders to show)
-					// instead of calculating per blend shape, we're assuming all blendshapes have the same min/max here though.
-					var minBlendShapeFrameWeight = 0.0f;
-					var maxBlendShapeFrameWeight = 0.0f;
-
 					var sharedMesh = skinnedMesh.sharedMesh;
 					if (!sharedMesh)
 					{
@@ -273,20 +299,15 @@ namespace UnityGLTF
 						return;
 					}
 
+					// The last frame of each blend shape is exported as its morph target (see ExportBlendShapes),
+					// so each weight is relative to the weight of that blend shape's last frame.
 					var shapeCount = sharedMesh.blendShapeCount;
+					weightMultipliers = new float[shapeCount];
 					for (int index = 0; index < shapeCount; ++index)
 					{
-						var blendShapeFrameCount = sharedMesh.GetBlendShapeFrameCount(index);
-						for (var frameIndex = 0; frameIndex < blendShapeFrameCount; ++frameIndex)
-						{
-							var shapeFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, frameIndex);
-							minBlendShapeFrameWeight = Mathf.Min(shapeFrameWeight, minBlendShapeFrameWeight);
-							maxBlendShapeFrameWeight = Mathf.Max(shapeFrameWeight, maxBlendShapeFrameWeight);
-						}
+						var lastFrameWeight = sharedMesh.GetBlendShapeFrameWeight(index, sharedMesh.GetBlendShapeFrameCount(index) - 1);
+						weightMultipliers[index] = lastFrameWeight != 0 ? 1.0f / lastFrameWeight : 1.0f;
 					}
-
-					if (maxBlendShapeFrameWeight != 0)
-						valueMultiplier = 1.0f / maxBlendShapeFrameWeight;
 
 					break;
 				case Transform _:
@@ -364,6 +385,13 @@ namespace UnityGLTF
 						{
 							Tsampler.Output = ExportAccessor(Array.ConvertAll(values, e => 1.0f - (float)e));
 						}
+						else if (weightMultipliers?.Length > 0)
+						{
+							var weights = new float[values.Length];
+							for (var i = 0; i < values.Length; i++)
+								weights[i] = (float)values[i] * weightMultipliers[i % weightMultipliers.Length];
+							Tsampler.Output = ExportAccessor(weights);
+						}
 						else if (valueMultiplier.HasValue)
 						{
 							var multiplier = valueMultiplier.Value;
@@ -400,7 +428,12 @@ namespace UnityGLTF
 							Array.Copy((float[])values[i], 0, floatArray, i * firstLength, firstLength);
 
 						// glTF weights 0..1 match to Unity weights 0..100, but Unity weights can be in arbitrary ranges
-						if (valueMultiplier.HasValue)
+						if (weightMultipliers?.Length > 0)
+						{
+							for (var i = 0; i < floatArray.Length; i++)
+								floatArray[i] *= weightMultipliers[i % weightMultipliers.Length];
+						}
+						else if (valueMultiplier.HasValue)
 						{
 							for (var i = 0; i < floatArray.Length; i++)
 								floatArray[i] *= valueMultiplier.Value;

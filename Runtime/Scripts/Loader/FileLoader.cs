@@ -58,21 +58,18 @@ namespace UnityGLTF.Loader
 
 			return string.Join("/", baseParts, 0, Mathf.Min(  baseParts.Length,baseIndex+1));
 		}
+
 		public Task<Stream> LoadStreamAsync(string relativeFilePath)
 		{
 			if (relativeFilePath.StartsWith("http://") || relativeFilePath.StartsWith("https://"))
 			{
 				return new UnityWebRequestLoader("").LoadStreamAsync(relativeFilePath);
 			}
-			
-#if UNITY_EDITOR
-			string path = CombinePaths(_rootDirectoryPath, relativeFilePath);
 
-			if (!File.Exists(path))
-			{
-				// Manual combine path with relativeFilePath
-				path = CombinePaths(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath)).Replace("\\", "/");
-			}
+#if UNITY_EDITOR
+			string path = URIHelper.FindExistingFile(_rootDirectoryPath, relativeFilePath, CombinePaths)
+			              ?? CombinePaths(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath));
+			path = path.Replace("\\", "/");
 
 			if (UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(UnityEngine.Texture2D))
 			{
@@ -98,17 +95,15 @@ namespace UnityGLTF.Loader
 				throw new ArgumentNullException(nameof(relativeFilePath));
 			}
 
-			if (File.Exists(relativeFilePath))
-				return File.OpenRead(relativeFilePath);
+			// long paths since the project path + asset path can exceed MAX_PATH on Windows
+			var longRelativeFilePath = LongPath.ToLongPath(relativeFilePath);
+			if (File.Exists(longRelativeFilePath))
+				return File.OpenRead(longRelativeFilePath);
 
-			string pathToLoad = Path.Combine(_rootDirectoryPath, relativeFilePath);
-			if (!File.Exists(pathToLoad))
+			string pathToLoad = URIHelper.FindExistingFile(_rootDirectoryPath, relativeFilePath, Path.Combine);
+			if (pathToLoad == null)
 			{
-				pathToLoad = Uri.UnescapeDataString(Path.Combine(_rootDirectoryPath, relativeFilePath));
-			}
-
-			if (!File.Exists(pathToLoad))
-			{
+				pathToLoad = Path.Combine(_rootDirectoryPath, Uri.UnescapeDataString(relativeFilePath));
 				if (relativeFilePath.ToLowerInvariant().EndsWith(".bin"))
 					throw new FileNotFoundException("Buffer file " + relativeFilePath + " not found in " + _rootDirectoryPath + ", complete path: " + pathToLoad, relativeFilePath);
 
@@ -117,7 +112,7 @@ namespace UnityGLTF.Loader
 				return new InvalidStream(relativeFilePath, _rootDirectoryPath, pathToLoad);
 			}
 
-			return File.OpenRead(pathToLoad);
+			return File.OpenRead(LongPath.ToLongPath(pathToLoad));
 		}
 
 		internal class InvalidStream: MemoryStream

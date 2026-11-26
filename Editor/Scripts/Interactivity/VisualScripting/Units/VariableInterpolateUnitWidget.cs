@@ -13,6 +13,19 @@ namespace Unity.VisualScripting
 
         protected override NodeColorMix baseColor => NodeColorMix.TealReadable;
 
+        public override bool foregroundRequiresInput => true;
+
+        protected override bool showHeaderAddon => unit.isDefined;
+
+        protected override float GetHeaderAddonWidth() => BezierEasingWidgetAddon.GetWidth();
+
+        protected override float GetHeaderAddonHeight(float width) => BezierEasingWidgetAddon.GetHeight();
+
+        protected override void DrawHeaderAddon()
+        {
+            BezierEasingWidgetAddon.Draw(headerAddonPosition, unit.pointA, unit.pointB);
+        }
+
         private VariableNameInspector nameInspector;
         private Func<Metadata, VariableNameInspector> nameInspectorConstructor;
 

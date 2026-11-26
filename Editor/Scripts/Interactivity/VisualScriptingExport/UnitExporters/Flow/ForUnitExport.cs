@@ -22,8 +22,10 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             var unit = unitExporter.unit as Unity.VisualScripting.For;
             
             bool coroutine = CoroutineHelper.CoroutineRequired(unit);
-            
-            if (!coroutine && unitExporter.IsInputLiteralOrDefaultValue(unit.step, out var defaultStepValue) && (int)defaultStepValue == 1)
+            // flow/for can't be interrupted, so loops with a Break use the custom loop
+            var breakVariable = LoopBreakHelper.GetBreakVariable(unitExporter, unit);
+
+            if (!coroutine && breakVariable == -1 && unitExporter.IsInputLiteralOrDefaultValue(unit.step, out var defaultStepValue) && (int)defaultStepValue == 1)
             {
                 var node = unitExporter.CreateNode<Flow_ForLoopNode>();
                 // TODO: set inital index > also... why even using it
@@ -46,8 +48,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     FlowHelpersVS.CreateCustomForLoop(unitExporter, out var startIndex,
                         out var endIndex, out var step, 
-                        out var flowIn, out var currentIndex, 
-                        out var loopBody, out var completed );
+                        out var flowIn, out var currentIndex,
+                        out var loopBody, out var completed, breakVariable);
                     
                     startIndex.MapToInputPort(unit.firstIndex);
                     endIndex.MapToInputPort(unit.lastIndex);
@@ -62,8 +64,8 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 {
                     FlowHelpersVS.CreateCustomForLoopWithFlowStep(unitExporter, out var startIndex,
                         out var endIndex, out var step, 
-                        out var flowIn,  out var nextStep, out var currentIndex, 
-                        out var loopBody, out var completed );
+                        out var flowIn,  out var nextStep, out var currentIndex,
+                        out var loopBody, out var completed, breakVariable);
                     
                     startIndex.MapToInputPort(unit.firstIndex);
                     endIndex.MapToInputPort(unit.lastIndex);
@@ -71,10 +73,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     step.MapToInputPort(unit.step);
                     flowIn.MapToControlInput(unit.enter);
                     currentIndex.MapToPort(unit.currentIndex);
-                    loopBody.MapToControlOutput(unit.body);
                     completed.MapToControlOutput(unit.exit);
-                    
-                    var awaiter = CoroutineHelper.AddCoroutineAwaiter(unitExporter, loopBody.node, loopBody.socket.Key);
+
+                    var awaiter = CoroutineHelper.AddBodyAwaiter(unitExporter, loopBody, unit.body);
                     awaiter.FlowOutDoneSocket().ConnectToFlowDestination(nextStep);
                     
                     unitExporter.vsExportContext.OnUnitNodesCreated += (nodes) =>
@@ -82,7 +83,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                         var awaiter = CoroutineHelper.FindCoroutineAwaiter(unitExporter, flowIn.node as GltfInteractivityUnitExporterNode);
                         if (awaiter == null)
                             return;
-                        awaiter.AddCoroutineWait(unitExporter, completed.node, completed.socket.Key);
+                        awaiter.AddCoroutineWait(unitExporter, flowIn.node, flowIn.socket.Key, completed.node, completed.socket.Key);
                     };
                 }
             }

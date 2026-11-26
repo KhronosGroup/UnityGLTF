@@ -19,9 +19,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as MaterialColorInterpolate;
-            
-            var materialTemplate = "/materials/{" + PointersHelper.IdPointerMaterialIndex + "}/";
-            var template = materialTemplate+ "pbrMetallicRoughness/baseColorFactor";
+
+            var materialTemplate = PointersHelper.IdPointerTemplMaterialByRef;
+            var template = materialTemplate+ "/pbrMetallicRoughness/baseColorFactor";
             
             var valueType = GltfTypes.Float4;
             
@@ -35,7 +35,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 }
 
                 valueType = map.ExportKeepColorAlpha ? GltfTypes.Float4 : GltfTypes.Float3;
-                template = materialTemplate + gltfProperty;
+                template = materialTemplate + "/" + gltfProperty;
             }
             else
             {
@@ -54,7 +54,7 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
             node.ValueIn(Pointer_InterpolateNode.IdPoint2).MapToInputPort(unit.pointB);
             node.FlowOut(Pointer_InterpolateNode.IdFlowOutDone).MapToControlOutput(unit.done);
             
-            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialIndex, unit.target, template, valueType);
+            PointersHelperVS.SetupPointerTemplateAndTargetInput(node, PointersHelper.IdPointerMaterialRef, unit.target, template, valueType);
             return true;
         }
     }

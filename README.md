@@ -1,4 +1,4 @@
-<img src="https://github.com/KhronosGroup/UnityGLTF/blob/e3797354f8d729156062265cbac98804a109d8f0/unitygltf-logo.png" width="200" /> 
+# UnityGLTF
 
 ![Great coverage of glTF 2.0.](https://img.shields.io/badge/glTF%20Spec-2.0-brightgreen)
 ![Unity 2021.3+ and URP recommended](https://img.shields.io/badge/Unity-2021.3%E2%80%936000.0%2B-brightgreen)
@@ -144,10 +144,10 @@ The lists below are non-conclusive and in no particular order. Note that there a
 - [KHR_materials_dispersion](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_dispersion/README.md) (refractive index dispersion)
 - [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_animation_pointer/README.md) (arbitrary property animations)
 - [MSFT_lod](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_lod/README.md) (level of detail) ![Vendor-specific Extension](https://img.shields.io/badge/⚠️%20Vendor--specific%20Extension-gray)
-- [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
-- [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
-- [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
-- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting export as interactivity graph) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_node_visibility](https://github.com/KhronosGroup/glTF/blob/fbe806836526cdd8cd99ed3770b1c56df56c6863/extensions/2.0/Khronos/KHR_node_visibility/README.md) (GameObject active state)
+- [`KHR_node_hoverability`](https://github.com/KhronosGroup/glTF/pull/2426)
+- [`KHR_node_selectability`](https://github.com/KhronosGroup/glTF/pull/2422)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/220ca407a2ce1f8463855803778edf73a885b7e9/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting export as interactivity graph)
 
 ### Import only
 
@@ -160,7 +160,7 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Export only
 
 - [KHR_materials_variants](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_variants/README.md)
-- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/interactivity/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting Graph exporter) ![Non-Ratified Extension](https://img.shields.io/badge/⚠️%20Non--Ratified%20Extension-gray)
+- [KHR_interactivity](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_interactivity/Specification.adoc) (Visual Scripting Graph exporter)
 - Timeline recorder track for exporting animations in the editor and at runtime
 - Lossless keyframe optimization on export
 - All 2D textures can be exported, RenderTextures included – they're baked at export.
@@ -173,9 +173,6 @@ The lists below are non-conclusive and in no particular order. Note that there a
 ### Visual Scripting Graph Exporter
 
 This plugin allows you to export VisualScripting Graphs as KHR_interactivity graphs in glTF files.
-> [!NOTE]  
-> Because the specification of KHR_interactivity is still in development, the plugin is disabled by default. To enable it, go to `Project Settings > UnityGLTF > Export` and enable the 'KHR_interactivity (VisualScripting)' plugin.
-Please keep in mind that until ratification of the extension, exported glTF files with the KHR_interactivity extension might be outdated and not valid anymore with new specification updates.
 
 ### Features
 

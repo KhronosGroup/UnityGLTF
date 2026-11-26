@@ -17,7 +17,7 @@ namespace UnityGLTF.Interactivity.Schema
         public const string IdFlowDone = "done";
         [FlowInSocketDescription]
         public const string IdFlowInCancel = "cancel";
-        [OutputSocketDescription(GltfTypes.Int)]
-        public const string IdOutLastDelayIndex = "lastDelayIndex";
+        [OutputSocketDescription(GltfTypes.Ref)]
+        public const string IdOutLastDelay = "lastDelay";
     }
 }

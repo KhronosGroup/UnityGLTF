@@ -1,4 +1,4 @@
-﻿using GLTF;
+using GLTF;
 using GLTF.Schema;
 using System;
 using System.Collections;
@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Unity.Collections;
@@ -66,6 +67,7 @@ namespace UnityGLTF
 		public AsyncCoroutineHelper AsyncCoroutineHelper = null;
 		public bool ThrowOnLowMemory = true;
 		public AnimationMethod AnimationMethod = AnimationMethod.Legacy;
+        public string NonHumanoidRootNodeName;
 		public bool AnimationLoopTime = true;
 		public bool AnimationLoopPose = false;
 		public DeduplicateOptions DeduplicateResources = DeduplicateOptions.None;
@@ -80,7 +82,7 @@ namespace UnityGLTF
 #if UNITY_EDITOR
 		public GLTFImportContext ImportContext = new GLTFImportContext(null, GLTFSettings.GetOrCreateSettings());
 #else
-		public GLTFImportContext ImportContext = new GLTFImportContext(GLTFSettings.GetOrCreateSettings());
+        public GLTFImportContext ImportContext = new GLTFImportContext(GLTFSettings.GetOrCreateSettings());
 #endif
 
 		[NonSerialized]
@@ -134,7 +136,7 @@ namespace UnityGLTF
 
 		public override string ToString()
 		{
-			return $"{(Progress * 100.0):F2}% (Buffers: {BuffersLoaded}/{BuffersTotal}, Nodes: {NodeLoaded}/{NodeTotal}, Texs: {TextureLoaded}/{TextureTotal})";
+			return $"{(Progress * 100.0):F2}% (Buffers: {BuffersLoaded}/{BuffersTotal}, Nodes: {NodeLoaded}/{NodeTotal}, Textures: {TextureLoaded}/{TextureTotal})";
 		}
 	}
 
@@ -147,7 +149,7 @@ namespace UnityGLTF
 	/// <summary>
 	/// Converts gltf animation data to unity
 	/// </summary>
-	public delegate float[] ValuesConvertion(NumericArray data, int frame);
+	public delegate float[] ValuesConversion(NumericArray data, int frame);
 
 	public partial class GLTFSceneImporter : IDisposable
 	{
@@ -243,7 +245,7 @@ namespace UnityGLTF
 		/// </summary>
 		public List<Object> GenericObjectReferences { get; private set; } = new List<Object>();
 
-		private Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)> _nativeBuffers = new Dictionary<Stream, (NativeArray<byte> array, ulong gcHandle)>(); 
+		private Dictionary<Stream, (NativeArray<byte> array, GCHandle gcHandle)> _nativeBuffers = new Dictionary<Stream, (NativeArray<byte> array, GCHandle gcHandle)>(); 
 #if HAVE_MESHOPT_DECOMPRESS
 		private List<NativeArray<byte>> meshOptNativeBuffers = new List<NativeArray<byte>>();
 #endif
@@ -255,12 +257,12 @@ namespace UnityGLTF
 		/// <summary>
 		/// Whether to keep a CPU-side copy of the texture after upload to GPU
 		/// </summary>
-		/// <remaks>
+		/// <remarks>
 		/// This is necessary when a texture is used with different sampler states, as Unity doesn't allow setting
 		/// of filter and wrap modes separately form the texture object. Setting this to false will omit making a copy
 		/// of a texture in that case and use the original texture's sampler state wherever it's referenced; this is
 		/// appropriate in cases such as the filter and wrap modes being specified in the shader instead
-		/// </remaks>
+		/// </remarks>
 		public bool KeepCPUCopyOfTexture = true;
 
 		/// <summary>
@@ -395,15 +397,15 @@ namespace UnityGLTF
 			if (stream is MemoryStream memoryStream)
 			{
 				// To safe memory footprint, we try to create a NativeArray without Allocation directly from the MemoryStream buffer.
-				// This 
 				if (memoryStream.TryGetBuffer(out var memStreamBuffer))
 				{
 					unsafe
 					{
-						var ptr = UnsafeUtility.PinGCArrayAndGetDataAddress(memStreamBuffer.Array, out var gcHandle);
+						var gcHandle = GCHandle.Alloc(memStreamBuffer.Array, GCHandleType.Pinned);
+						var ptr = (byte*)gcHandle.AddrOfPinnedObject() + memStreamBuffer.Offset;
 						var nativeBuffer = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, memStreamBuffer.Count, Allocator.None);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-						NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer, AtomicSafetyHandle.GetTempMemoryHandle());
+						NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeBuffer,  AtomicSafetyHandle.Create()); 
 #endif
 						
 						_nativeBuffers.Add(stream,new (nativeBuffer, gcHandle));
@@ -429,7 +431,7 @@ namespace UnityGLTF
 			
 			var newNativeBuffer = new NativeArray<byte>(buf, Allocator.Persistent);
 			
-			_nativeBuffers.Add(stream,new (newNativeBuffer,0));
+			_nativeBuffers.Add(stream,new (newNativeBuffer,default));
 			
 			return newNativeBuffer;
 		}
@@ -526,6 +528,8 @@ namespace UnityGLTF
 				{
 					plugin.OnAfterImportRoot(_gltfRoot);
 				}
+
+				GLTFHelpers.ValidateDataRanges(_gltfRoot);
 
 				cancellationToken.ThrowIfCancellationRequested();
 
@@ -784,10 +788,10 @@ namespace UnityGLTF
 					if (_deduplicatedStatistics == null)
 						_deduplicatedStatistics = new DeduplicatedStatistics();
 					
-					var meshfilters = CreatedObject.GetComponentsInChildren<MeshFilter>();
+					var meshFilters = CreatedObject.GetComponentsInChildren<MeshFilter>();
 					var smr = CreatedObject.GetComponentsInChildren<SkinnedMeshRenderer>();
 					
-					var meshes = meshfilters.Select(m => m.sharedMesh).Concat(smr.Select(s => s.sharedMesh)).Distinct().ToArray();
+					var meshes = meshFilters.Select(m => m.sharedMesh).Concat(smr.Select(s => s.sharedMesh)).Distinct().ToArray();
 					_deduplicatedStatistics.meshCountBefore = meshes.Length;
 					
 					var meshHashes = MeshHashUtility.ComputeMeshHashes(meshes);
@@ -796,7 +800,7 @@ namespace UnityGLTF
 					var usedHashes = new List<long>();
 
 					// Assign for each mesh-hash with group-count > 1, the first mesh of this hash-group
-					foreach (var m in meshfilters)
+					foreach (var m in meshFilters)
 					{
 						var hash = meshHashes[m.sharedMesh];
 						var hashGroup = groups[hash];
@@ -894,7 +898,7 @@ namespace UnityGLTF
 		public NativeArray<byte> GetBufferViewData(BufferView bufferView)
 		{
 			GetBufferData(bufferView.Buffer).Wait();
-			GLTFHelpers.LoadBufferView(bufferView, _assetCache.BufferCache[bufferView.Buffer.Id].ChunkOffset, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
+			GLTFHelpers.LoadBufferView(bufferView, _assetCache.BufferCache[bufferView.Buffer.Id].ChunkDataOffset, _assetCache.BufferCache[bufferView.Buffer.Id].bufferData, out var bufferViewCache);
 			return bufferViewCache;
 		}
 
@@ -973,7 +977,7 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
-				// If some failure occured during loading, remove the node
+				// If some failure occurred during loading, remove the node
 
 				if (_assetCache.NodeCache[nodeId] != null)
 				{
@@ -1014,7 +1018,7 @@ namespace UnityGLTF
 					{
 						AccessorId = accessorId,
 						bufferData = bufferData.bufferData,
-						Offset = (uint)bufferData.ChunkOffset
+						Offset = (uint)bufferData.ChunkDataOffset
 					};					
 					GLTFHelpers.LoadBufferView(accessor.BufferView.Value, attrAccessor.Offset, attrAccessor.bufferData, out var bufferViewCache);
 					NumericArray resultArray = attrAccessor.AccessorContent;
@@ -1113,9 +1117,7 @@ namespace UnityGLTF
 			nodeObj.transform.localRotation = rotation;
 			nodeObj.transform.localScale = scale;
 
-
-
-			async Task CreateNodeComponentsAndChilds(bool ignoreMesh = false, bool onlyMesh = false)
+			async Task CreateNodeComponentsAndChildren(bool ignoreMesh = false, bool onlyMesh = false)
 			{
 				// If we're creating a really large node, we need it to not be visible in partial stages. So we hide it while we create it
 				nodeObj.SetActive(false);
@@ -1153,8 +1155,30 @@ namespace UnityGLTF
 						if (node.Skin != null)
 							await SetupBones(node.Skin.Value, renderer, cancellationToken);
 
-						// morph target weights
-						if (weights != null)
+                        // calculate SkinnedMeshRenderer local bounds by applying bone transforms to make it consistent with Unity's FBX importer effectively fixing: https://github.com/KhronosGroup/UnityGLTF/issues/876
+                        if (renderer.rootBone == null) renderer.localBounds = unityMesh.bounds;
+                        else
+                        {
+                            var bakedMesh = new Mesh();
+                            renderer.BakeMesh(bakedMesh, true);
+
+#if UNITY_EDITOR
+                            var scaleFactor = _options.ImportContext?.ImportScaleFactor ?? 1; 
+#else 
+                            float scaleFactor = 1f; 
+#endif
+
+                            var bounds = TransformBounds(renderer.rootBone.worldToLocalMatrix * renderer.transform.localToWorldMatrix, bakedMesh.bounds);
+                            bounds.center *= scaleFactor;
+                            bounds.size *= scaleFactor;
+
+                            renderer.localBounds = bounds;
+
+                            Object.DestroyImmediate(bakedMesh);
+                        }
+
+                        // morph target weights
+                        if (weights != null)
 						{
 							for (int i = 0; i < weights.Count; ++i)
 							{
@@ -1207,20 +1231,20 @@ namespace UnityGLTF
 
 				// Cameras and lights have a different forward axis in glTF vs. Unity.
 				// Thus, when importing lights and cameras we have to flip them.
-				// To ensure children are still oriented correctly, we need to add an inbetween node
+				// To ensure children are still oriented correctly, we need to add an in between node
 				// That counters the transformation of the parent node.
 				// This way, animations can still correctly apply – e.g. if a camera is animated,
-				// the childs should move along. We can't just add the camera to an empty child and flip that.
+				// the children should move along. We can't just add the camera to an empty child and flip that.
 				if ((hasLight || hasCamera) && nodeObj.transform.childCount > 0 && node.Children?.Count > 0)
 				{
 					var flipQuaternion = Quaternion.Inverse(SchemaExtensions.InvertDirection);
 					
-					// Special case for hierarchy simplification and roundtrips: if we have
+					// Special case for hierarchy simplification and round trips: if we have
 					// - exactly one child
 					// - that's flipped 180°
 					// - and doesn't have any components
 					// - and the node doesn't have any extensions
-					// we can just remove that, it's likely an inbetween our own exporter has added.
+					// we can just remove that, it's likely an in between our own exporter has added.
 					// Theoretically, there are more conditions (not checked here):
 					// - it's not targeted by any animations
 					// - it's not the target of any glTF pointer or index
@@ -1241,23 +1265,23 @@ namespace UnityGLTF
 						}
 						UnityEngine.Object.DestroyImmediate(firstChild.gameObject);
 					}
-					// Otherwise, we need to add an inbetween object
+					// Otherwise, we need to add an in between object
 					else
 					{
 						var childCount = nodeObj.transform.childCount;
-						var inbetween = new GameObject();
-						inbetween.name = node.Name + "-flipped";
+						var inBetween = new GameObject();
+						inBetween.name = node.Name + "-flipped";
 						// make sure this objects sits exactly where the nodeObj is
-						inbetween.transform.SetParent(nodeObj.transform, false);
-						inbetween.transform.SetParent(null, true);
-						// move all children to the inbetween object
+						inBetween.transform.SetParent(nodeObj.transform, false);
+						inBetween.transform.SetParent(null, true);
+						// move all children to the in between object
 						for (int i = 0; i < childCount; i++)
 						{
 							// Index 0 is correct here, after removing the first child, the next one is now the first and we want to keep the order.
-							nodeObj.transform.GetChild(0).SetParent(inbetween.transform, true);
+							nodeObj.transform.GetChild(0).SetParent(inBetween.transform, true);
 						}
-						inbetween.transform.SetParent(nodeObj.transform, true);
-						inbetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
+						inBetween.transform.SetParent(nodeObj.transform, true);
+						inBetween.transform.localRotation = Quaternion.Inverse(SchemaExtensions.InvertDirection);
 					}
 				}
 				nodeObj.SetActive( ShouldBeVisible(node, nodeObj));
@@ -1267,12 +1291,12 @@ namespace UnityGLTF
 
 			if (instancesTRS == null || instancesTRS.Length == 0)
 			{
-				await CreateNodeComponentsAndChilds();
+				await CreateNodeComponentsAndChildren();
 			}
 			else
 			{
 				var shouldBeVisible = ShouldBeVisible(node, nodeObj);
-				await CreateNodeComponentsAndChilds(true);
+				await CreateNodeComponentsAndChildren(true);
 				var instanceParentNode = new GameObject("Instances");
 				instanceParentNode.transform.SetParent(nodeObj.transform, false);
 				instanceParentNode.gameObject.SetActive(false);
@@ -1283,7 +1307,7 @@ namespace UnityGLTF
 					{
 						nodeObj = new GameObject(string.IsNullOrEmpty(node.Name) ? ("GLTFNode" + nodeIndex) : node.Name);
 						nodeObj.transform.SetParent(instanceParentNode.transform, false);
-						await CreateNodeComponentsAndChilds(false, true);
+						await CreateNodeComponentsAndChildren(false, true);
 						firstInstance = nodeObj;
 						
 						var renderers = firstInstance.GetComponentsInChildren<Renderer>();
@@ -1311,8 +1335,21 @@ namespace UnityGLTF
 			progressStatus.NodeLoaded++;
 			progress?.Report(progressStatus);
 		}
-		
-		private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
+
+        Bounds TransformBounds(Matrix4x4 matrix, Bounds bounds)
+        {
+            var extents = bounds.extents;
+            var ax = matrix.MultiplyVector(new Vector3(extents.x, 0, 0));
+            var ay = matrix.MultiplyVector(new Vector3(0, extents.y, 0));
+            var az = matrix.MultiplyVector(new Vector3(0, 0, extents.z));
+            var x = Mathf.Abs(ax.x) + Mathf.Abs(ay.x) + Mathf.Abs(az.x);
+            var y = Mathf.Abs(ax.y) + Mathf.Abs(ay.y) + Mathf.Abs(az.y);
+            var z = Mathf.Abs(ax.z) + Mathf.Abs(ay.z) + Mathf.Abs(az.z);
+
+            return new Bounds(matrix.MultiplyPoint3x4(bounds.center), new Vector3(x, y, z) * 2f);
+        }
+
+        private async Task ConstructBufferData(Node node, CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -1344,14 +1381,14 @@ namespace UnityGLTF
 			{
 				if (_assetCache.BufferCache[bufferIndex] != null) Debug.Log(LogType.Error, $"_assetCache.BufferCache[bufferIndex] != null; (File: {_gltfFileName})");
 				
-				var bufferCacheDate = new BufferCacheData
+				var bufferCacheData = new BufferCacheData
 				{
 					bufferData = new NativeArray<byte>((int)buffer.ByteLength, Allocator.Persistent),
-					ChunkOffset = 0
+					ChunkDataOffset = 0
 				};
 
-				meshOptNativeBuffers.Add(bufferCacheDate.bufferData);
-				_assetCache.BufferCache[bufferIndex] = bufferCacheDate;
+				meshOptNativeBuffers.Add(bufferCacheData.bufferData);
+				_assetCache.BufferCache[bufferIndex] = bufferCacheData;
 				return;
 			}
 #else
@@ -1497,7 +1534,7 @@ namespace UnityGLTF
 					}
 				}
 
-				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid)
+				if (_options.AnimationMethod == AnimationMethod.MecanimHumanoid || _options.AnimationMethod == AnimationMethod.Mecanim && !string.IsNullOrEmpty(_options.NonHumanoidRootNodeName))
                 {
                     var animator = sceneObj.GetComponent<Animator>();
                     if (!animator) animator = sceneObj.AddComponent<Animator>();
@@ -1510,7 +1547,7 @@ namespace UnityGLTF
 			}
 			catch (Exception ex)
 			{
-				// If some failure occured during loading, clean up the scene
+				// If some failure occurred during loading, clean up the scene
 				UnityEngine.Object.DestroyImmediate(sceneObj);
 				CreatedObject = null;
 
@@ -1528,11 +1565,23 @@ namespace UnityGLTF
 
 		protected virtual BufferCacheData ConstructBufferFromGLB(int bufferIndex)
 		{
-			GLTFParser.SeekToBinaryChunk(_gltfStream.Stream, bufferIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			// Buffers reference their chunk by index (glTF 2.1). Without it, buffer 0 uses the BIN chunk at index 1, after the JSON chunk.
+			// Other buffers without a chunk index are undefined in the spec, they keep using the chunk after the previous buffer's chunk.
+			int binaryChunkIndex = _gltfRoot.Buffers[bufferIndex].Chunk ?? bufferIndex + 1;
+			GLBChunkInfo chunkInfo = GLTFParser.SeekToBinaryChunkData(_gltfStream.Stream, binaryChunkIndex, _gltfStream.StartPosition);  // sets stream to correct start position
+			if (chunkInfo.Type != GLBChunkFormat.BIN)
+			{
+				throw new GLTFHeaderInvalidException($"Buffer {bufferIndex} references GLB chunk {binaryChunkIndex}, which is not a BIN chunk.");
+			}
+			GLTFParser.ThrowIfUnsupportedChunkEncoding(chunkInfo);
+			if (chunkInfo.Length < _gltfRoot.Buffers[bufferIndex].ByteLength)
+			{
+				throw new GLTFHeaderInvalidException($"Buffer {bufferIndex} byteLength {_gltfRoot.Buffers[bufferIndex].ByteLength} exceeds the length {chunkInfo.Length} of GLB chunk {binaryChunkIndex}.");
+			}
 			return new BufferCacheData
 			{
 				Stream = _gltfStream.Stream,
-				ChunkOffset = (uint)_gltfStream.Stream.Position,
+				ChunkDataOffset = _gltfStream.Stream.Position,
 				bufferData = GetOrCreateNativeBuffer(_gltfStream.Stream),
 			};
 		}
@@ -1581,8 +1630,8 @@ namespace UnityGLTF
 				if (buffer.Value.array.IsCreated)
 					buffer.Value.array.Dispose();
 
-				if (buffer.Value.gcHandle != 0)
-					UnsafeUtility.ReleaseGCObject(buffer.Value.gcHandle);
+				if (buffer.Value.gcHandle.IsAllocated)
+					buffer.Value.gcHandle.Free();
 			}			
 			_nativeBuffers.Clear();
 			

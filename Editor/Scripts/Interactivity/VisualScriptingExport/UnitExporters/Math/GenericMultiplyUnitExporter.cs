@@ -29,7 +29,9 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                 
                 if (input.type == typeof(T))
                     return true;
-                if (input.type == typeof(object))
+                // object typed ports (e.g. Generic Multiply's own inputs) say nothing about the type,
+                // so keep looking at the default value or the connected source
+                if (input.type != typeof(object) && !input.type.IsAssignableFrom(typeof(T)))
                     return false;
 
                 if (input.hasDefaultValue)
@@ -45,7 +47,11 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
                     var source = input.connection.source;
                     if (source.type == typeof(T))
                         return true;
-                    
+                    // A concrete output type decides it (e.g. Matrix4x4.TRS outputs a Matrix4x4, even though it has a Quaternion input).
+                    // Only look further upstream when the output could still hold a T (e.g. object from a chained Generic Multiply)
+                    if (!source.type.IsAssignableFrom(typeof(T)))
+                        return false;
+
                     foreach (var nextInput in source.unit.valueInputs)
                         if (IsTypeInput<T>(nextInput))
                             return true;

@@ -56,6 +56,8 @@ namespace UnityGLTF
 				var textureMapType = _imageInfos[t].textureMapType;
 				var fileOutputPath = Path.Combine(outputPath, _imageInfos[t].outputPath);
 				_imageExportPaths.Add(fileOutputPath);
+				// long path to support output paths exceeding MAX_PATH on Windows
+				fileOutputPath = LongPath.ToLongPath(fileOutputPath);
 
 				var canBeExportedFromDisk = _imageInfos[t].canBeExportedFromDisk;
 
@@ -435,7 +437,7 @@ namespace UnityGLTF
 						break;
 				}
 
-				if (File.Exists(path))
+				if (File.Exists(LongPath.ToLongPath(path)))
 				{
 					if(AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(Texture2D))
 					{
@@ -452,7 +454,8 @@ namespace UnityGLTF
 		private byte[] GetTextureDataFromDisk(Texture texture)
 		{
 #if UNITY_EDITOR
-			var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+			// long path since the project path + asset path can exceed MAX_PATH on Windows
+			var path = LongPath.ToLongPath(UnityEditor.AssetDatabase.GetAssetPath(texture));
 
 			if (File.Exists(path))
 				return File.ReadAllBytes(path);
@@ -544,7 +547,7 @@ namespace UnityGLTF
 		    image.MimeType = PNGMimeType;
 
 			AlignToBoundary(_bufferWriter.BaseStream, 0x00);
-			uint byteOffset = CalculateAlignment((uint)_bufferWriter.BaseStream.Position, 4);
+			long byteOffset = CalculateAlignment(_bufferWriter.BaseStream.Position, 4);
 
 			bool wasAbleToExport = false;
 			bool textureHasAlpha = true;
@@ -653,7 +656,7 @@ namespace UnityGLTF
 				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 
-				var cacheKey = uniqueTexture.GetHashCode().ToString();
+				var cacheKey = GetImageCacheKey(uniqueTexture, image.MimeType, canExportAsJpeg ? $"quality{settings.DefaultJpegQuality}" : null);
 				if (settings.UseCaching && ExportCache.TryGetBytes(texture, cacheKey, out var bytes))
 				{
 					_bufferWriter.Write(bytes);
@@ -703,8 +706,8 @@ namespace UnityGLTF
 			// 	Debug.LogWarning("Validation Warning: " + "Image has non-power-of-two dimensions: " + texture.width + "x" + texture.height + ".", texture);
 			// }
 
-			uint byteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Position - byteOffset, 4);
-			image.BufferView = ExportBufferView((uint)byteOffset, (uint)byteLength);
+			long byteLength = CalculateAlignment(_bufferWriter.BaseStream.Position - byteOffset, 4);
+			image.BufferView = ExportBufferView(byteOffset, byteLength);
 
 			if (ExportNames)
 			{
@@ -726,7 +729,8 @@ namespace UnityGLTF
 
 		private struct SamplerRelevantTextureData : IEquatable<SamplerRelevantTextureData>
 		{
-			private readonly TextureWrapMode wrapMode;
+			private readonly TextureWrapMode wrapModeU;
+			private readonly TextureWrapMode wrapModeV;
 			private readonly FilterMode filterMode;
 			private readonly bool hasMipmaps;
 			private readonly bool hasAniso;
@@ -743,7 +747,8 @@ namespace UnityGLTF
 #else
 			if (texture is Texture2D tex2D) mipmapCount = tex2D.mipmapCount;
 #endif
-				wrapMode = texture.wrapMode;
+				wrapModeU = texture.wrapModeU;
+				wrapModeV = texture.wrapModeV;
 				filterMode = texture.filterMode;
 				hasMipmaps = mipmapCount > 1;
 				hasAniso = aniso > 0;
@@ -751,7 +756,7 @@ namespace UnityGLTF
 
 			public bool Equals(SamplerRelevantTextureData other)
 			{
-				return wrapMode == other.wrapMode && filterMode == other.filterMode && hasMipmaps == other.hasMipmaps && hasAniso == other.hasAniso;
+				return wrapModeU == other.wrapModeU && wrapModeV == other.wrapModeV && filterMode == other.filterMode && hasMipmaps == other.hasMipmaps && hasAniso == other.hasAniso;
 			}
 
 			public override bool Equals(object obj)
@@ -763,13 +768,25 @@ namespace UnityGLTF
 			{
 				unchecked
 				{
-					var hashCode = (int)wrapMode;
+					var hashCode = (int)wrapModeU;
+					hashCode = (hashCode * 397) ^ (int)wrapModeV;
 					hashCode = (hashCode * 397) ^ (int)filterMode;
 					hashCode = (hashCode * 397) ^ hasMipmaps.GetHashCode();
 					hashCode = (hashCode * 397) ^ hasAniso.GetHashCode();
 					return hashCode;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Key for encoded images in the export cache. The encoded bytes depend on the image format and the settings of its encoder,
+		/// so both are part of the key, e.g. ("image/jpeg", "quality90"). Other formats (WebP, KTX2, ...) pass their own mime type and settings.
+		/// </summary>
+		private static string GetImageCacheKey(UniqueTexture uniqueTexture, string mimeType, string encoderSettings = null)
+		{
+			// The key is part of a file name, so "image/jpeg" becomes "image-jpeg"
+			var key = $"{uniqueTexture.GetHashCode()}_{mimeType.Replace('/', '-')}";
+			return string.IsNullOrEmpty(encoderSettings) ? key : $"{key}_{encoderSettings}";
 		}
 
 		private Dictionary<SamplerRelevantTextureData, int> _textureSettingsToSamplerIndices =
@@ -789,25 +806,24 @@ namespace UnityGLTF
 
 			var sampler = new Sampler();
 
-			switch (texture.wrapMode)
+			// U and V can have different wrap modes (texture.wrapMode only returns U)
+			sampler.WrapS = GltfWrapMode(texture.wrapModeU);
+			sampler.WrapT = GltfWrapMode(texture.wrapModeV);
+
+			WrapMode GltfWrapMode(TextureWrapMode wrapMode)
 			{
-				case TextureWrapMode.Clamp:
-					sampler.WrapS = WrapMode.ClampToEdge;
-					sampler.WrapT = WrapMode.ClampToEdge;
-					break;
-				case TextureWrapMode.Repeat:
-					sampler.WrapS = WrapMode.Repeat;
-					sampler.WrapT = WrapMode.Repeat;
-					break;
-				case TextureWrapMode.Mirror:
-					sampler.WrapS = WrapMode.MirroredRepeat;
-					sampler.WrapT = WrapMode.MirroredRepeat;
-					break;
-				default:
-					Debug.LogWarning("Unsupported Texture.wrapMode: " + texture.wrapMode, texture);
-					sampler.WrapS = WrapMode.Repeat;
-					sampler.WrapT = WrapMode.Repeat;
-					break;
+				switch (wrapMode)
+				{
+					case TextureWrapMode.Clamp:
+						return WrapMode.ClampToEdge;
+					case TextureWrapMode.Repeat:
+						return WrapMode.Repeat;
+					case TextureWrapMode.Mirror:
+						return WrapMode.MirroredRepeat;
+					default:
+						Debug.LogWarning("Unsupported Texture.wrapMode: " + wrapMode, texture);
+						return WrapMode.Repeat;
+				}
 			}
 
 			if(dataForTexture.HasMipmaps)

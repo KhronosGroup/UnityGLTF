@@ -109,6 +109,16 @@
             "name": "com.netpyoung.webp",
             "expression": "0.3.22",
             "define": "HAVE_WEBP"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "HAVE_HDRP"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "HAVE_URP"
         }
     ],
     "noEngineReferences": false

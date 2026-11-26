@@ -20,6 +20,22 @@ using UnityGLTF.Plugins;
 
 namespace UnityGLTF
 {
+	/// <summary>
+	/// Binary format version of exported GLB files.
+	/// </summary>
+	internal enum GlbVersion
+	{
+		/// <summary>
+		/// glTF 2.0 binary format: 32-bit file and chunk lengths (max. 4 GB), one JSON chunk followed by an optional BIN chunk.
+		/// </summary>
+		V2_32Bit = 2,
+		/// <summary>
+		/// glTF 2.1 binary format (draft, not ratified): 64-bit file and chunk lengths, chunk encodings and any number of chunks.
+		/// Warning: the specification is not final and most loaders can't read version 3 files yet. Use only for testing.
+		/// </summary>
+		V3_64Bit = 3,
+	}
+
 	public class ExportContext
 	{
 		public bool TreatEmptyRootAsScene = false;
@@ -27,6 +43,18 @@ namespace UnityGLTF
 		public LayerMask ExportLayers = -1;
 		public ILogger logger;
 		internal readonly GLTFSettings settings;
+
+		/// <summary>
+		/// Binary format version of exported GLB files. Defaults to <see cref="UnityGLTF.GlbVersion.V2_32Bit"/>.
+		/// Warning: <see cref="UnityGLTF.GlbVersion.V3_64Bit"/> is based on the non-ratified glTF 2.1 draft and most loaders can't read it yet.
+		/// Internal until the draft is ratified, enable the <see cref="Plugins.GlbV3Export"/> plugin to export version 3.
+		/// </summary>
+		internal GlbVersion GlbVersion = GlbVersion.V2_32Bit;
+
+		/// <summary>
+		/// The exporter currently using this context. Set when the exporter is created, before the plugin instances are created.
+		/// </summary>
+		public GLTFSceneExporter Exporter { get; internal set; }
 
 		public ExportContext() : this(GLTFSettings.GetOrCreateSettings()) { }
 
@@ -151,8 +179,20 @@ namespace UnityGLTF
 		
 		private static ILogger Debug = UnityEngine.Debug.unityLogger;
 		private List<GLTFExportPluginContext> _plugins = new List<GLTFExportPluginContext>();
+		// enabled plugins and their instances (which can be null)
+		private Dictionary<GLTFExportPlugin, GLTFExportPluginContext> _enabledPlugins = new Dictionary<GLTFExportPlugin, GLTFExportPluginContext>();
+		private Dictionary<GLTFExportPlugin, bool> _forcedPluginStates = new Dictionary<GLTFExportPlugin, bool>();
+		private bool _isCreatingPluginInstances = false;
 
 		public IReadOnlyList<GLTFExportPluginContext> Plugins => _plugins;
+
+		/// <summary>
+		/// Overrides <see cref="GLTFSettings.ExportDisabledGameObjects"/> for this export. Can be set by plugins in <see cref="GLTFExportPlugin.CreateInstance"/> (via <see cref="ExportContext.Exporter"/>).
+		/// If it's still null after all plugin instances are created, it's set from the settings.
+		/// </summary>
+		public bool? ExportDisabledGameObjects = null;
+
+		private bool exportDisabledGameObjects => ExportDisabledGameObjects ?? settings.ExportDisabledGameObjects;
 		
 		public struct TextureMapType
 		{
@@ -424,14 +464,12 @@ namespace UnityGLTF
 		
 		private Material _normalChannelMaterial;
 
-		private const uint MagicGLTF = 0x46546C67;
-		private const uint Version = 2;
 		private const uint MagicJson = 0x4E4F534A;
 		private const uint MagicBin = 0x004E4942;
 		private const int GLTFHeaderSize = 12;
 		private const int SectionHeaderSize = 8;
 
-		private bool _visbilityPluginEnabled = false;
+		private bool _visibilityPluginEnabled = false;
 		
 		public struct UniqueTexture : IEquatable<UniqueTexture>
 		{
@@ -622,6 +660,7 @@ namespace UnityGLTF
 		public GLTFSceneExporter(Transform[] rootTransforms, ExportContext context)
 		{
 			_exportContext = context;
+			context.Exporter = this;
 			if (context.logger != null)
 				Debug = context.logger;
 			else
@@ -631,15 +670,29 @@ namespace UnityGLTF
 			_plugins.Add(new LegacyCallbacksPlugin());
 			// legacy: implicit plugin for all the methods on ExportContext
 			_plugins.Add(context.GetExportContextCallbacks());
-			
+
+			// Remove invalid transforms. Set before the plugin instances are created, so plugins can check what's exported.
+			_rootTransforms = rootTransforms?.Where(x => x).ToArray() ?? Array.Empty<Transform>();
+
 			// create export plugin instances
+			// plugins can enable/disable other plugins with ForcePluginEnable while their instance is created
+			_isCreatingPluginInstances = true;
 			foreach (var plugin in settings.ExportPlugins)
 			{
-				if (plugin != null && plugin.Enabled)
-				{
-					var instance = plugin.CreateInstance(context);
-					if (instance != null) _plugins.Add(instance);
-				}
+				if (plugin == null || _enabledPlugins.ContainsKey(plugin)) continue;
+				var enabled = _forcedPluginStates.TryGetValue(plugin, out var forcedEnabled) ? forcedEnabled : plugin.Enabled;
+				if (enabled)
+					CreatePluginInstance(plugin);
+			}
+			_isCreatingPluginInstances = false;
+
+			if (!ExportDisabledGameObjects.HasValue)
+				ExportDisabledGameObjects = settings.ExportDisabledGameObjects;
+
+			_visibilityPluginEnabled = _enabledPlugins.Keys.Any(x => x is VisibilityExport);
+			if (_visibilityPluginEnabled && !exportDisabledGameObjects)
+			{
+				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
 			}
 
 			_exportLayerMask = _exportContext.ExportLayers;
@@ -652,9 +705,6 @@ namespace UnityGLTF
 			
 			var normalChannelShader = Resources.Load("NormalChannel", typeof(Shader)) as Shader;
 			_normalChannelMaterial = new Material(normalChannelShader);
-
-			// Remove invalid transforms
-			_rootTransforms = rootTransforms?.Where(x => x).ToArray() ?? Array.Empty<Transform>();
 
 			_exportedTransforms = new Dictionary<int, int>();
 			_exportedCameras = new Dictionary<int, int>();
@@ -702,14 +752,53 @@ namespace UnityGLTF
 			
 			foreach (var plugin in settings.ExportPlugins)
 			{
-				if (plugin != null && plugin.Enabled && plugin.AssetExtras != null)
+				if (plugin != null && _enabledPlugins.ContainsKey(plugin) && plugin.AssetExtras != null)
 					_root.Asset.PluginExtras.Add(plugin.DisplayName, plugin.AssetExtras);
 			}
-			
-			_visbilityPluginEnabled = settings.ExportPlugins.Any(x => x is VisibilityExport && x.Enabled);
-			if (_visbilityPluginEnabled && !settings.ExportDisabledGameObjects)
+		}
+
+		private void CreatePluginInstance(GLTFExportPlugin plugin)
+		{
+			// registered before CreateInstance, so the plugin isn't created twice when it's forced from within its own CreateInstance
+			_enabledPlugins[plugin] = null;
+			var instance = plugin.CreateInstance(_exportContext);
+			if (!_enabledPlugins.ContainsKey(plugin)) return; // was force disabled in the meantime
+			if (instance != null) _plugins.Add(instance);
+			_enabledPlugins[plugin] = instance;
+		}
+
+		/// <summary>
+		/// Enables or disables an export plugin for this export, regardless of its setting.
+		/// Can only be called from <see cref="GLTFExportPlugin.CreateInstance"/> (via <see cref="ExportContext.Exporter"/>).
+		/// </summary>
+		public void ForcePluginEnable<T>(bool enable) where T : GLTFExportPlugin
+		{
+			if (!_isCreatingPluginInstances)
 			{
-				Debug.Log(LogType.Warning,"KHR_node_visibility export plugin is enabled, but Export Disabled GameObjects is not. This may lead to unexpected results.");
+				Debug.Log(LogType.Error, $"{nameof(ForcePluginEnable)} can only be called from {nameof(GLTFExportPlugin)}.{nameof(GLTFExportPlugin.CreateInstance)}.");
+				return;
+			}
+
+			var plugin = settings.ExportPlugins.FirstOrDefault(x => x is T);
+			if (!plugin)
+			{
+				if (enable) Debug.Log(LogType.Warning, $"Can't enable export plugin {typeof(T).Name}: it's not registered in the export settings.");
+				return;
+			}
+
+			_forcedPluginStates[plugin] = enable;
+			if (_enabledPlugins.ContainsKey(plugin) == enable)
+				return;
+
+			if (enable)
+			{
+				CreatePluginInstance(plugin);
+			}
+			else
+			{
+				var instance = _enabledPlugins[plugin];
+				if (instance != null) _plugins.Remove(instance);
+				_enabledPlugins.Remove(plugin);
 			}
 		}
 
@@ -729,7 +818,8 @@ namespace UnityGLTF
 		/// <param name="fileName">The name of the GLTF file</param>
 		public void SaveGLB(string path, string fileName)
 		{
-			var fullPath = GetFileName(path, fileName, ".glb");
+			// long path to support output paths exceeding MAX_PATH on Windows
+			var fullPath = LongPath.ToLongPath(GetFileName(path, fileName, ".glb"));
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
@@ -807,7 +897,7 @@ namespace UnityGLTF
 
 			animationPointerResolver?.Resolve(this);
 
-			_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+			_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 
 			gltfSerializationMarker.Begin();
 			_root.Serialize(jsonWriter, true);
@@ -818,34 +908,42 @@ namespace UnityGLTF
 			jsonWriter.Flush();
 
 			// align to 4-byte boundary to comply with spec.
-			AlignToBoundary(jsonStream);
+			AlignToBoundary(jsonStream, (byte)' ');
 			AlignToBoundary(binStream, 0x00);
 
-			int glbLength = (int)(GLTFHeaderSize + SectionHeaderSize +
-				jsonStream.Length + SectionHeaderSize + binStream.Length);
+			var version = (uint)_exportContext.GlbVersion;
+			// Version 2: 12-byte file header, 8-byte chunk headers (length, type), each chunk ends 4-byte aligned (done above).
+			// Version 3: 16-byte file header, 16-byte chunk headers (type, encoding, 64-bit length), each chunk starts 8-byte aligned.
+			long fileHeaderSize = version == 3 ? 16 : GLTFHeaderSize;
+			long chunkHeaderSize = version == 3 ? 16 : SectionHeaderSize;
+			long chunkAlignment = version == 3 ? 8 : 4;
+			long glbLength = fileHeaderSize + chunkHeaderSize + CalculateAlignment(jsonStream.Length, chunkAlignment) +
+				chunkHeaderSize + CalculateAlignment(binStream.Length, chunkAlignment);
+			GLTF.GLBBuilder.ThrowIfTooLarge(version, glbLength);
 
 			BinaryWriter writer = new BinaryWriter(stream);
 
 			// write header
-			writer.Write(MagicGLTF);
-			writer.Write(Version);
-			writer.Write(glbLength);
+			writer.Write(GLTF.GLBHeader.GLTF_MAGIC_NUMBER);
+			writer.Write(version);
+			if (version == 3) writer.Write((ulong)glbLength);
+			else writer.Write((uint)glbLength);
 
 			gltfWriteJsonStreamMarker.Begin();
 			// write JSON chunk header.
-			writer.Write((int)jsonStream.Length);
-			writer.Write(MagicJson);
+			WriteGlbChunkHeader(writer, version, MagicJson, jsonStream.Length);
 
 			jsonStream.Position = 0;
 			CopyStream(jsonStream, writer);
+			WriteGlbChunkPadding(writer, jsonStream.Length, chunkAlignment);
 			gltfWriteJsonStreamMarker.End();
 
 			gltfWriteBinaryStreamMarker.Begin();
-			writer.Write((int)binStream.Length);
-			writer.Write(MagicBin);
+			WriteGlbChunkHeader(writer, version, MagicBin, binStream.Length);
 
 			binStream.Position = 0;
 			CopyStream(binStream, writer);
+			WriteGlbChunkPadding(writer, binStream.Length, chunkAlignment);
 			gltfWriteBinaryStreamMarker.End();
 
 			writer.Flush();
@@ -854,23 +952,50 @@ namespace UnityGLTF
 			exportGltfMarker.End();
 		}
 
+		private static void WriteGlbChunkHeader(BinaryWriter writer, uint version, uint chunkType, long chunkLength)
+		{
+			if (version == 3)
+			{
+				writer.Write(chunkType);
+				writer.Write(0u); // plain encoding
+				writer.Write((ulong)chunkLength);
+			}
+			else
+			{
+				writer.Write((uint)chunkLength);
+				writer.Write(chunkType);
+			}
+		}
+
+		/// <summary>
+		/// Zero padding after a chunk, so the next chunk starts aligned. Version 2 chunks are already padded inside their content.
+		/// </summary>
+		private static void WriteGlbChunkPadding(BinaryWriter writer, long chunkLength, long alignment)
+		{
+			for (long i = chunkLength; i < CalculateAlignment(chunkLength, alignment); i++)
+				writer.Write((byte)0);
+		}
+
 		/// <summary>
 		/// Specifies the path and filename for the GLTF Json and binary
 		/// </summary>
 		/// <param name="path">File path for saving the GLTF and binary files</param>
 		/// <param name="fileName">The name of the GLTF file</param>
-		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true)
+		/// <param name="exportTextures">Write textures as separate files next to the .gltf. Ignored when <paramref name="embedTexturesInBuffer"/> is true.</param>
+		/// <param name="embedTexturesInBuffer">Store textures and other resources as buffer views inside the .bin file instead of writing them as separate files.</param>
+		public void SaveGLTFandBin(string path, string fileName, bool exportTextures = true, bool embedTexturesInBuffer = false)
 		{
 			exportGltfMarker.Begin();
 
 			exportGltfInitMarker.Begin();
-			_shouldUseInternalBufferForImages = false;
+			_shouldUseInternalBufferForImages = embedTexturesInBuffer;
 			var toLower = fileName.ToLowerInvariant();
 			if (toLower.EndsWith(".gltf"))
 				fileName = fileName.Substring(0, fileName.Length - 5);
 			if (toLower.EndsWith(".bin"))
 				fileName = fileName.Substring(0, fileName.Length - 4);
-			var fullPath = GetFileName(path, fileName, ".bin");
+			// long path to support output paths exceeding MAX_PATH on Windows
+			var fullPath = LongPath.ToLongPath(GetFileName(path, fileName, ".bin"));
 			var dirName = Path.GetDirectoryName(fullPath);
 			if (dirName != null && !Directory.Exists(dirName))
 				Directory.CreateDirectory(dirName);
@@ -913,7 +1038,7 @@ namespace UnityGLTF
 			{
 				AlignToBoundary(_bufferWriter.BaseStream, 0x00);
 				_buffer.Uri = fileName + ".bin";
-				_buffer.ByteLength = CalculateAlignment((uint)_bufferWriter.BaseStream.Length, 4);
+				_buffer.ByteLength = CalculateAlignment(_bufferWriter.BaseStream.Length, 4);
 			}
 			else
 			{
@@ -988,14 +1113,14 @@ namespace UnityGLTF
 				"LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
 			};
 
-			var sanitisedNamePart = Regex.Replace(filename, invalidReStr, "_");
+			var sanitizedNamePart = Regex.Replace(filename, invalidReStr, "_");
 			foreach (var reservedWord in reservedWords)
 			{
 				var reservedWordPattern = string.Format("^{0}\\.", reservedWord);
-				sanitisedNamePart = Regex.Replace(sanitisedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
+				sanitizedNamePart = Regex.Replace(sanitizedNamePart, reservedWordPattern, "_reservedWord_.", RegexOptions.IgnoreCase);
 			}
 
-			return sanitisedNamePart;
+			return sanitizedNamePart;
 		}
 
 		public void DeclareExtensionUsage(string extension, bool isRequired=false)
@@ -1026,7 +1151,7 @@ namespace UnityGLTF
 			var isRoot = _rootTransforms.Contains(transform);
 			if (isRoot) return true;
 			
-			if (!settings.ExportDisabledGameObjects && !transform.gameObject.activeSelf)
+			if (!exportDisabledGameObjects && !transform.gameObject.activeSelf)
 			{
 				return false;
 			}
@@ -1086,7 +1211,7 @@ namespace UnityGLTF
 
 		private NodeId ExportNode(Transform nodeTransform)
 		{
-			if (_exportedTransforms.TryGetValue(nodeTransform.GetInstanceID(), out var existingNodeId))
+			if (_exportedTransforms.TryGetValue(GetObjectId(nodeTransform), out var existingNodeId))
 				return new NodeId() { Id = existingNodeId, Root = _root };
 
 			foreach (var plugin in _plugins)
@@ -1096,7 +1221,7 @@ namespace UnityGLTF
 			
 			var node = new Node();
 
-			if (_visbilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
+			if (_visibilityPluginEnabled && !nodeTransform.gameObject.activeSelf)
 			{
 				DeclareExtensionUsage(KHR_node_visibility_Factory.EXTENSION_NAME, false);
 				node.AddExtension(KHR_node_visibility_Factory.EXTENSION_NAME, new KHR_node_visibility { visible = false });
@@ -1110,7 +1235,7 @@ namespace UnityGLTF
 			// TODO think more about how this callback is used – could e.g. be modifying the hierarchy,
 			// and we would want to prevent exporting children of this node.
 			// Could also be that we want to add a mesh based on some condition
-			// (e.g. merged childs, procedural geometry, etc.)
+			// (e.g. merged children, procedural geometry, etc.)
 			beforeNodeExportMarker.Begin();
 			foreach (var plugin in _plugins)
 				plugin?.BeforeNodeExport(this, _root, nodeTransform, node);
@@ -1122,7 +1247,7 @@ namespace UnityGLTF
 				_animatedNodes.Add(nodeTransform);
 			}
 #endif
-			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject, settings.ExportDisabledGameObjects))
+			if (nodeTransform.GetComponent<SkinnedMeshRenderer>() && ContainsValidRenderer(nodeTransform.gameObject, exportDisabledGameObjects))
 			{
 				_skinnedNodes.Add(nodeTransform);
 			}
@@ -1158,7 +1283,7 @@ namespace UnityGLTF
 			};
 
 			// Register nodes for animation parsing (could be disabled if animation is disabled)
-			_exportedTransforms.Add(nodeTransform.GetInstanceID(), _root.Nodes.Count);
+			_exportedTransforms.Add(GetObjectId(nodeTransform), _root.Nodes.Count);
 
 			_root.Nodes.Add(node);
 
@@ -1205,41 +1330,41 @@ namespace UnityGLTF
 			// children that are not primitives get added as child nodes
 			if (nonPrimitives.Length > 0)
 			{
-				var parentOfChilds = node;
+				var parentOfChildren = node;
 
 				// when we're exporting a light or camera, we add an implicit node as first child of the camera/light node.
 				// this ensures that child objects and animations etc. "just work".
 				if (needsInvertedLookDirection)
 				{
-					var inbetween = new Node();
+					var inBetween = new Node();
 
 					if (ExportNames)
 					{
-						inbetween.Name = nodeTransform.name + "-flipped";
+						inBetween.Name = nodeTransform.name + "-flipped";
 					}
 
-					inbetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
+					inBetween.Rotation = Quaternion.Inverse(SchemaExtensions.InvertDirection).ToGltfQuaternionConvert();
 
-					var inbetweenId = new NodeId
+					var inBetweenId = new NodeId
 					{
 						Id = _root.Nodes.Count,
 						Root = _root
 					};
 
-					_root.Nodes.Add(inbetween);
+					_root.Nodes.Add(inBetween);
 
 					node.Children = new List<NodeId>(1);
-					node.Children.Add(inbetweenId);
+					node.Children.Add(inBetweenId);
 
-					parentOfChilds = inbetween;
+					parentOfChildren = inBetween;
 				}
 
-				parentOfChilds.Children = new List<NodeId>(nonPrimitives.Length);
+				parentOfChildren.Children = new List<NodeId>(nonPrimitives.Length);
 				foreach (var child in nonPrimitives)
 				{
 					if (!ShouldExportTransform(child.transform)) continue;
 					var childNode = ExportNode(child.transform);
-					if (childNode != null) parentOfChilds.Children.Add(childNode);
+					if (childNode != null) parentOfChildren.Children.Add(childNode);
 				}
 			}
 
@@ -1275,7 +1400,7 @@ namespace UnityGLTF
 			// add another primitive if the root object also has a mesh
 			if (ShouldExportTransform(transform))
 			{
-				if (ContainsValidRenderer(transform.gameObject, settings.ExportDisabledGameObjects))
+				if (ContainsValidRenderer(transform.gameObject, exportDisabledGameObjects))
 				{
 					prims.Add(transform.gameObject);
 				}
@@ -1346,7 +1471,7 @@ namespace UnityGLTF
 			{
 				var fileInfo = _fileInfos[i];
 
-				var fileOutputPath = Path.Combine(outputPath, fileInfo.uniqueFileName);
+				var fileOutputPath = LongPath.ToLongPath(Path.Combine(outputPath, fileInfo.uniqueFileName));
 
 				var dir = Path.GetDirectoryName(fileOutputPath);
 				if (!Directory.Exists(dir) && dir != null)
@@ -1387,7 +1512,7 @@ namespace UnityGLTF
 			if (materialObj == DefaultMaterial)
 				materialKey = 0;
 			else if (materialObj)
-				materialKey = materialObj.GetInstanceID();
+				materialKey = GetObjectId(materialObj);
 
 			if (_exportedMaterials.TryGetValue(materialKey, out var id))
 			{

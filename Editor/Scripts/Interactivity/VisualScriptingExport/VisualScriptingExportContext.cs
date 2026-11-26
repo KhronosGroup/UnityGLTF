@@ -147,19 +147,10 @@ namespace UnityGLTF.Interactivity.VisualScripting
 
         /// <summary>
         /// Get the value of a variable from a VariableUnit.
-        /// Materials and GameObjects Values will be converted to their respective indices.
         /// </summary>
         public object GetVariableValue(IUnifiedVariableUnit unit, out string varName, out string cSharpVarType, bool checkTypeIsSupported = true)
         {
             var rawValue = GetVariableValueRaw(unit, out varName, out cSharpVarType, checkTypeIsSupported);
-            
-            if (rawValue is GameObject gameObjectValue)
-                rawValue = exporter.GetTransformIndex(gameObjectValue.transform);
-            else if (rawValue is Component component)
-                rawValue = exporter.GetTransformIndex(component.transform);
-            else if (rawValue is Material materialValue)
-                rawValue = exporter.GetMaterialIndex(materialValue);
-
             return rawValue;
         }
         
@@ -426,6 +417,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             RemoveUnconnectedNodes();
 
             TriggerInterfaceExportCallbacks();
+
+            AddSelectabilityExtensionToInvisibleNodes();
             
             // For Value Conversion, we need to presort the nodes, otherwise we might get wrong results
             TopologicalSort();
@@ -436,8 +429,12 @@ namespace UnityGLTF.Interactivity.VisualScripting
             if (cleanUpAndOptimizeExportedGraph)
                 CleanUp();
             
+            ReplaceSpecialValuesWithNodes();
+            
             // Final Topological Sort
-            TopologicalSort();  
+            TopologicalSort(includeFlows: true);
+            
+            ResolveRefToStaticPointer();
             
             CollectOpDeclarations();
             
@@ -447,6 +444,15 @@ namespace UnityGLTF.Interactivity.VisualScripting
             OutputUnitLogs();
         }
         
+        private static IEnumerable<ScriptMachine> GetScriptMachines(Transform root) =>
+            root.GetComponentsInChildren<ScriptMachine>(true).Where(x => x.graph != null);
+
+        /// <summary>
+        /// True if any of the roots has a Script Machine that is exported (active, with a graph).
+        /// </summary>
+        public static bool HasScriptMachinesToExport(IEnumerable<Transform> roots) =>
+            roots != null && roots.Any(root => root && GetScriptMachines(root).Any(m => m.isActiveAndEnabled));
+
         /// <summary>
         /// Called after the scene has been exported to add interactivity data.
         /// </summary>
@@ -473,10 +479,8 @@ namespace UnityGLTF.Interactivity.VisualScripting
             foreach (var root in exporter.RootTransforms)
             {
                 if (!root) continue;
-                var machines = root
-                    .GetComponentsInChildren<ScriptMachine>(true)
-                    .Where(x => x.graph != null);
-                
+                var machines = GetScriptMachines(root);
+
                 scriptMachines.AddRange(machines.Where(m => m.isActiveAndEnabled));
                 
                 // Just for warning log, we collect the inactive machines, which will be ignored for export

@@ -4,6 +4,131 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+- fix: Canvas export plugin (experimental): compile errors when the `com.unity.ugui` package is not installed. Without it, the plugin now shows a warning and exports nothing
+- fix: obsolete `ShaderUtil.ShaderPropertyType` / `ShaderUtil.GetPropertyType` warnings in Unity 6.6
+- fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Import results (imported materials and textures, extensions in the file, ...) are no longer stored in the import settings (.meta file) but in a hidden sub-asset of the import. All glTF files are reimported once after the update (#919, #920)
+- fix: Asset Importer: remapping a material or texture to another material or texture of the same file didn't work and referenced the file's own sub-assets in the .meta file. These remaps are now stored by name. The importer inspector shows remaps whose target is missing and can remove them
+
+## [2.25.0] - 2026-11-16
+- add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`
+- add: [experimental] "GLB Version 3 (64-bit)" export plugin, off by default. Version 3 is not ratified yet and most loaders can't read it, so every export logs a warning
+- change: sizes, lengths, offsets and counts in the glTF serialization schema (`Accessor`, `BufferView`, `GLTFBuffer`, sparse accessors) and the GLB types are `long` instead of `int` / `uint`. This is a breaking change for code that uses these APIs
+- change: renamed public API: `ChunkFormat` → `GLBChunkFormat`, `ChunkInfo` → `GLBChunkInfo`, `GLTFParser.SeekToBinaryChunk` → `SeekToBinaryChunkData`, the GLB header constants → `GLB2_FILE_HEADER_SIZE`, `GLB2_CHUNK_HEADER_SIZE` and `GLTF_MAGIC_NUMBER`, `ValuesConvertion` → `ValuesConversion`, and `PointersHelper.IdPointerVisibility` / `IdPointerSelectability` → `IdPointerVisibilityByIndex` / `IdPointerSelectabilityByIndex`
+- fix: Asset Importer: with material import disabled, every reimport logged "AssetImporter is referencing an asset from the previous import" (#917, #918), and the inspector kept stale scene/material/texture data flags
+- fix: humanoid import: rigs without the required humanoid bones logged two native AvatarBuilder warnings. Now one import warning names the missing bones and no avatar is created
+- fix: import refuses buffer, bufferView, accessor and sparse ranges that exceed their parent or 2 GB, and buffers longer than their GLB chunk, instead of reading outside the buffer
+- fix: `KHR_interactivity`: Skinned Mesh blend shape weight units export `nodes/{}/weights` pointers, as `meshes/{}/weights` was removed from the spec (KhronosGroup/glTF#2550), and the weight pointer was missing a `/`
+- fix: `KHR_interactivity`: enabling colliders set `KHR_node_selectability` with an index-based pointer on a node reference
+- fix: `KHR_interactivity`: identical pointer gets with equal constant inputs weren't merged on export, and repeated `globalMatrix` / `matrix` pointer gets are merged now
+- fix: `FindObjectsByType` deprecation warning in Unity 6.4 in the Find Objects Of Type export
+
+## [2.24.0] - 2026-10-20
+- add: `KHR_interactivity`: more Visual Scripting units: Not Equal, Approximately Equal, Toggle Flow/Value, Cooldown, Timer, Break, Switch/Select On Enum, Null Coalesce, Round, Exponentiate, Root, Average, Normalize, Move Towards, Per Second, Angle, Project and RGB To/From OkLCh
+- add: `KHR_interactivity`: export of `Light.color`, `intensity`, `range` and `spotAngle` (get/set) as `KHR_lights_punctual` pointers
+- add: `KHR_interactivity`: [experimental] export of `AudioSource.Play`, `Stop`, `Pause` and `UnPause` as `audio/play`, `audio/stop`, `audio/pause` and `audio/unpause` ops declared with `KHR_audio_emitter` (not specified yet), and of `volume`, `loop`, `pitch`, `minDistance` and `maxDistance` (get/set) as `KHR_audio_emitter` pointers
+- add: `KHR_audio_emitter`: [experimental] export and import of the source `playbackRate` (`AudioSource.pitch`)
+- add: `KHR_interactivity`: events On Mouse Up As Button, On Pointer Up, On Mouse Enter/Exit, Late Update and Fixed Update
+- add: `KHR_interactivity`: export of many more `Mathf`, `Vector2/3/4`, `Quaternion` and `Color` methods, properties and operators, incl. color space and HSV conversions
+- add: `KHR_interactivity`: export of `Random.value`, `rotation`, `insideUnitCircle`, `Time.frameCount` and the unscaled/fixed/smooth `Time` properties; enums are exported as ints
+- add: humanoid import: "Convert Clips to Humanoid" option (Animation Type Humanoid) converts the clips to humanoid clips (body, IK goal and muscle curves), so they can be retargeted to other humanoids and the Animator extracts root motion from them. Off by default, so existing imports keep their generic clips
+- fix: `KHR_audio_emitter`: [experimental] the volume was exported to both the emitter and the source gain (applied twice), and all AudioSources on a GameObject used the loop, volume and play on awake settings of the first one
+- fix: `KHR_interactivity`: runtime static members (e.g. `Random.value`, `Time.frameCount`) were exported as constant editor values
+- fix: `KHR_interactivity`: coroutines: For Each, Sequence, Wait Until and Wait While didn't wait, waits in branches that were not taken blocked the flow; While loops without coroutines never started
+- fix: `KHR_interactivity`: results that differed from Unity: `Mathf.Epsilon`, `Sign`, `Log`, `Round` / `RoundToInt`, `Quaternion.Angle`, `ToAngleAxis`, `Lerp`, `Random.insideUnitSphere` / `onUnitSphere`, numeric Equal and Null Check
+- fix: `KHR_interactivity`: export errors for unconnected object inputs and `Vector3.MoveTowards` with flow connections; unsupported overloads (e.g. `Mathf.Max(params float[])`) are reported instead of dropping inputs
+- fix: `KHR_interactivity`: the Visual Scripting export plugin forced `KHR_animation_pointer`, `KHR_node_visibility` and "Export Disabled GameObjects" for every export, not only for exports with Script Machines, so all animations were exported as pointer animations
+- fix: humanoid animation export: with Apply Root Motion the root motion is baked into the hips instead of a track that moved the root node to the origin; Foot IK no longer changes the exported pose; only the human bones and transforms with own curves get tracks; looping clips exported their first frame as the last frame; exporting several clips from an AnimatorController destroyed its states
+
+## [2.23.0] - 2026-10-12
+- add: `KHR_interactivity`: export of `Transform.TransformDirection` / `InverseTransformDirection` and `TransformVector` / `InverseTransformVector`
+- add: `KHR_interactivity`: export of the `Transform.eulerAngles` / `localEulerAngles` getters
+- add: `KHR_interactivity`: Visual Scripting units World To Local / Local To World Position and Rotation
+- add: `KHR_interactivity`: Interpolate for world `position`, `rotation` and `lossyScale` of a Transform
+- add: `KHR_interactivity`: Interpolate Transform unit, interpolates position, rotation and scale of a Transform to the world pose of another Transform
+- add: `KHR_interactivity`: the Visual Scripting export forces `KHR_node_visibility`, `KHR_animation_pointer` and the export of disabled GameObjects
+- change: `KHR_interactivity`: euler to quaternion conversion uses `math/quatFromAngles`
+- fix: `KHR_interactivity`: `Transform.Translate` ignored `Space.Self` and `relativeTo`
+- fix: `KHR_interactivity`: setting `Transform.eulerAngles` set the local rotation
+- fix: `KHR_interactivity`: Transform interpolations failed to export without Unity/glTF space conversion
+- fix: `KHR_interactivity`: export error for subgraphs with unconnected inputs
+- fix: `KHR_interactivity`: type detection of generic multiply
+- fix: `KHR_interactivity`: missing ref type in `math/switch`
+
+## [2.22.2] - 2026-10-12
+- add: `KHR_interactivity`: export of `Camera.main` projection properties (`fieldOfView`, `aspect`, `nearClipPlane`, `farClipPlane`, `orthographic`, `orthographicSize`) from the `activeCamera` pointers
+- fix: export, export cache and import failing on Windows when file paths exceed 260 characters
+- fix: `KHR_interactivity`: `Transform.TransformPoint` / `InverseTransformPoint` on `Camera.main` used the non-existent `activeCamera/globalMatrix` pointer, the matrix is now composed from `activeCamera/position` and `activeCamera/rotation`
+- fix: `KHR_interactivity`: `Transform.LookAt` export ignored the object's own position and never set the look direction
+
+## [2.22.1] - 2026-10-05
+- fix: null ref on import for morph target accessors without bufferView and sparse (valid per spec, e.g. Blender exports unchanged morph target normals this way)
+- fix: `KHR_interactivity`: export validator picked the wrong schema for operations with multiple overloads (e.g. `math/transform` with float4)
+- fix: missing .meta file
+- 
+## [2.22.0] - 2026-10-02
+- add: Asset Importer > root motion support for Mecanim (generic) imports, consistent with the FBX importer: set a Root Node Name, clips get root motion curves (#877)
+- add: Asset Importer > hierarchy dropdown for the Root Node Name field
+- add: Asset Importer > feedback for humanoid avatar bone mapping (#860)
+- add: `KHR_interactivity`: Visual Scripting units with 1:1 export for setting multiple variables, set/cancel delay, throttle, doN, multiGate and integer bitwise operations
+- add: `KHR_interactivity`: export validates value types on connections
+- add: `KHR_interactivity`: `event.name` property
+- change: `KHR_interactivity`: variables use `name` instead of `id`
+- change: humanoid avatars use Unity's auto mapping for bones UnityGLTF doesn't know and store a T-pose
+- change: generic avatars are only created when the file has animations or a root node name is set
+- change: avatar names match the FBX importer
+- change: texture filters are imported based on magFilter (NEAREST imports as Point), minFilter decides between Bilinear and Trilinear
+- fix: skin export with missing bones shifted the joint indices (#873)
+- fix: morph target weights of blend shapes with multiple frames (#899)
+- fix: morph target weight animations were exported one frame late
+- fix: baked animations were missing the second-to-last frame
+- fix: emission export for colors above 1
+- fix: texture wrap modes are exported per axis (wrapT used the U wrap mode)
+- fix: texture export cache ignored the image format (e.g. JPEG bytes exported as image/png)
+- fix: humanoid import in Unity 6.6
+- fix: Animator settings were lost when removing empty root objects
+- fix: SkinnedMeshRenderer bounds on import
+- fix: remapped material dependencies during full reimport (#915)
+- fix: `KHR_interactivity`: export hang, Color alpha, quaternion multiply, implicit value conversions, flow/doN reset input
+- fix: `KHR_interactivity`: spec conformance of the exported JSON, node sorting, number serialization, int types in math/neg and double export
+- fix: `KHR_interactivity`: faster circular flow detection
+
+## [2.21.0] - 2026-08-14
+- add: Asset Importer > loop settings can now be set per animation clip
+- add: lightmap UV generation support for meshes with blend shapes
+- fix: compile error in Unity 6.4 non-URP projects
+- fix: `ReadOnlySpan` texture loading is now guarded to Unity 6.1+ 
+
+## [2.20.1] - 2026-08-12
+- fix: HDRP double sided material import
+- fix: HDRP alpha cutoff material import
+
+## [2.20.0] - 2026-07-31
+- add: `KHR_interactivity` export is now an official part of UnityGLTF: the Visual Scripting export plugin is enabled by default and no longer marked as non-ratified. 
+- add: export support for embedded textures in .gltf+.bin exports (option, default = false)
+- add: Anim.Pointer: warning logs for unresolved properties
+- change: skipping non-exportable animation material properties entirely
+- fix: Mixamo left hand finger bone detection for pinky3 and middle2
+
+## [2.19.5] - 2026-04-29
+- fix: compiler error in Unity 6.3 > wrong ifdef
+
+## [2.19.4] - 2026-04-22
+- fix: Unity 6.3+ api changes for Shader/Material propertyType
+- fix: Unity 6.4+ warnings for `GetInstanceId` (changed to GetEntityId)
+- fix: RoughRefractionFeature for Unity 6.4+ with new Render Graph API (new separate file)
+- fix: removed unused field in GLTFImporter (causing warnings in Unity 6.6)
+
+## [2.19.3] - 2026-03-27
+- fix: HDRP material import setup for opaque materials
+- change: HDRP only > ignoring transmission when transmission-factor is 0 
+
+## [2.19.2] - 2026-03-25
+- fix: file paths with spaces and plus in name results in not found errors
+- fix: GLTFSetting asset > plugins subasset creation in import mode
+- fix: safety checks for draco import
+- change: reduced memory footprint on texture import for non-memory-streams
+
 ## [2.19.1] - 2026-02-19
 - add: import support for webP textures (requires package https://github.com/netpyoung/unity.webp)
 - add: import support for exr textures (requires Unity 6+)

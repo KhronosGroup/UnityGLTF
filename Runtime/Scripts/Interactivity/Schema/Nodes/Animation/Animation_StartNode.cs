@@ -16,12 +16,17 @@ namespace UnityGLTF.Interactivity.Schema
         
         [FlowOutSocketDescription()]
         public const string IdFlowOut = "out";
-        
+
         [FlowOutSocketDescription()]
         public const string IdFlowDone = "done";
+
+        // Per the KHR_interactivity spec, animation/start activates 'err' when any input value is
+        // invalid (invalid animation ref, NaN/inf startTime/endTime, or speed <= 0 / NaN / inf).
+        [FlowOutSocketDescription()]
+        public const string IdFlowError = "err";
         
-        [InputSocketDescription(GltfTypes.Int)]
-        public const string IdValueAnimation = "animation";
+        [InputSocketDescription(GltfTypes.Ref)]
+        public const string IdValueAnimationRef = "animation";
         
         [InputSocketDescription(GltfTypes.Float)]
         public const string IdValueSpeed = "speed";

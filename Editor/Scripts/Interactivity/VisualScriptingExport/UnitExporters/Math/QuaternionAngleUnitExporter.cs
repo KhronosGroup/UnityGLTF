@@ -13,20 +13,16 @@ namespace UnityGLTF.Interactivity.VisualScripting.Export
         [InitializeOnLoadMethod]
         private static void Register()
         {
-            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Angle), new QuaternionToAxisAngleUnitExporter());
+            InvokeUnitExport.RegisterInvokeExporter(typeof(Quaternion), nameof(Quaternion.Angle), new QuaternionAngleUnitExporter());
         }
         
         public bool InitializeInteractivityNodes(UnitExporter unitExporter)
         {
             var unit = unitExporter.unit as InvokeMember;
 
-            var node = unitExporter.CreateNode<Math_QuatAngleBetweenNode>();
-            node.ValueIn(Math_QuatToAxisAngleNode.IdValueA).MapToInputPort(unit.valueInputs[0]);
-            node.ValueIn(Math_QuatToAxisAngleNode.IdValueA).MapToInputPort(unit.valueInputs[1]);
-
-            var degToRadNode = unitExporter.CreateNode<Math_RadNode>();
-            degToRadNode.ValueIn(Math_RadNode.IdInputA).ConnectToSource(node.FirstValueOut());
-            degToRadNode.FirstValueOut().MapToPort(unit.result);
+            // Not math/quatAngleBetween: Unity uses |dot|, so the result is the shortest angle in [0, 180] degrees
+            UnityMathExpressions.QuaternionAngle(unitExporter, unit.valueInputs[0], unit.valueInputs[1])
+                .MapToPort(unit.result);
             
             unitExporter.ByPassFlow(unit.enter, unit.exit);
             return true;

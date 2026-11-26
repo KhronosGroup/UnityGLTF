@@ -77,12 +77,13 @@ namespace UnityGLTF.Interactivity.VisualScripting
         {
             if (value.hasValidConnection && value.connections.First().source.unit is GraphInput graphInput)
             {
-                var subGraphUnit = exportContext.currentGraphProcessing.subGraphUnit;
-                if (subGraphUnit != null)
+                var subGraphUnit = exportContext.currentGraphProcessing?.subGraphUnit;
+                var graphValueKey = value.connections.First().source.key;
+                if (subGraphUnit != null && subGraphUnit.valueInputs.Contains(graphValueKey))
                 {
-                    var graphValueKey = value.connections.First().source.key;
                     // Reroute to the SubGraph Unit to get the value
                     value = subGraphUnit.valueInputs[graphValueKey];
+                    defaultValues = subGraphUnit.defaultValues;
                 }
             }
             

@@ -122,18 +122,21 @@ namespace Unity.VisualScripting
                 yield break;
             }
             
-            // Transform is a special case; we only want to allow localPosition, localRotation, and localScale
+            // Transform is a special case; we only want to allow (local) position, (local) rotation, and localScale
             if ((member.declaringType == typeof(UnityEngine.Transform) || member.declaringType == typeof(UnityEngine.RectTransform)) &&
                 member.name != "localPosition" &&
                 member.name != "localRotation" &&
-                member.name != "localScale")
+                member.name != "localScale" &&
+                member.name != "position" &&
+                member.name != "rotation" &&
+                member.name != "lossyScale")
             {
                 yield break;
             }
 
             if (member.isAccessor)
             {
-                if (member.isPubliclySettable)
+                if (member.isPubliclySettable || InterpolateMember.IsWorldScale(member))
                 {
                     yield return new InterpolateMember(member).Option();
                 }

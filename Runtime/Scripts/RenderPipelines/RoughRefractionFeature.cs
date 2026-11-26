@@ -1,3 +1,8 @@
+#if !UNITY_6000_4_OR_NEWER
+
+// Legacy RenderPass / RenderGraph Version for pre Unity 6.4 Versions
+
+
 #if HAVE_URP_12_OR_NEWER || HAVE_URP_10_OR_NEWER
 
 using System;
@@ -298,4 +303,5 @@ namespace UnityGLTF
 	}
 }
 
+#endif
 #endif
