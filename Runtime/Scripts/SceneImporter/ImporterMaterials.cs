@@ -606,7 +606,8 @@ namespace UnityGLTF
 				if (specular != null)
 				{
 					specularMapper.SpecularFactor = specular.specularFactor;
-					specularMapper.SpecularColorFactor = specular.specularColorFactor.ToUnityColorLinear();
+					// glTF stores the linear value, the material color is gamma-encoded (Unity linearizes it for the shader)
+					specularMapper.SpecularColorFactor = specular.specularColorFactor.ToUnityColorRaw();
 					if (specular.specularTexture != null)
 					{
 						var td = await FromTextureInfo(specular.specularTexture, false);

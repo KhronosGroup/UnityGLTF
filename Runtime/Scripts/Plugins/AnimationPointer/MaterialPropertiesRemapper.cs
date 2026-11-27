@@ -503,7 +503,8 @@ namespace UnityGLTF.Plugins
             };
             AddMap(specularFactor);
 
-            var specularColorFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.LinearColor)
+            // The material holds the gamma-encoded color (see the specular import), glTF the linear RGB value
+            var specularColorFactor = new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
             {
                 PropertyNames = new[] { "_SpecularColorFactor", "specularColorFactor" },
                 GltfPropertyName =
@@ -539,12 +540,14 @@ namespace UnityGLTF.Plugins
                 };
             AddMap(sheenRoughnessFactor);
             var sheenColorFactor =
-                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.Float)
+                // The material holds the gamma-encoded color (see the sheen import), glTF the linear RGB value
+                new MaterialPointerPropertyMap(MaterialPointerPropertyMap.PropertyTypeOption.SRGBColor)
                 {
                     PropertyNames = new[] { "sheenColor", "_sheenColor", "sheenColorFactor", "_sheenColorFactor" },
                     GltfPropertyName =
                         $"extensions/{KHR_materials_sheen_Factory.EXTENSION_NAME}/{nameof(KHR_materials_sheen.sheenColorFactor)}",
                     ExtensionName = KHR_materials_sheen_Factory.EXTENSION_NAME,
+                    ExportKeepColorAlpha = false,
                 };
             AddMap(sheenColorFactor);
             

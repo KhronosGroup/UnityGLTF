@@ -268,7 +268,8 @@ namespace UnityGLTF.Plugins
 				if (material.HasProperty(specularFactor))
 					vir.specularFactor = material.GetFloat(specularFactor);
 				if (material.HasProperty(specularColorFactor))
-					vir.specularColorFactor = material.GetColor(specularColorFactor).ToNumericsColorRaw();
+					// The importer converts the glTF (linear) value to gamma for the material color (ToUnityColorRaw), so convert it back here
+					vir.specularColorFactor = material.GetColor(specularColorFactor).ToNumericsColorLinear();
 				if (material.HasProperty(specularTexture) && material.GetTexture(specularTexture))
 					vir.specularTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(specularTexture), nameof(specularTexture));
 				if (material.HasProperty(specularColorTexture) && material.GetTexture(specularColorTexture))
@@ -316,7 +317,8 @@ namespace UnityGLTF.Plugins
 					materialnode.Extensions.Add(KHR_materials_sheen_Factory.EXTENSION_NAME, cc);
 
 				if (material.HasProperty(sheenColorFactor))
-					cc.sheenColorFactor = material.GetColor(sheenColorFactor).ToNumericsColorRaw();
+					// The importer converts the glTF (linear) value to gamma for the material color (ToUnityColorRaw), so convert it back here
+					cc.sheenColorFactor = material.GetColor(sheenColorFactor).ToNumericsColorLinear();
 				if (material.HasProperty(sheenColorTexture))
 					cc.sheenColorTexture = exporter.ExportTextureInfoWithTextureTransform(material, material.GetTexture(sheenColorTexture), nameof(sheenColorTexture));
 				
