@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: Asset Importer: the sampler's filter and wrap modes of a texture file in the project (e.g. the textures of a .gltf) are applied to the texture's importer by "Fix All" in the importer inspector. Point filtered palette textures were blurred after a .gltf roundtrip
 - fix: Asset Importer: "Fix All" in the importer inspector also imports small texture files (up to 128 pixels wide and high) uncompressed. Block compression changes small textures such as color palettes visibly
 - fix: export: textures up to 128 pixels wide and high are always exported as PNG instead of JPEG. JPEG compression shifted the colors of color palettes and lookup tables
+- fix: import: textures of unnamed images embedded as data URIs were named after a fragment of their base64 data, and exporting them as .gltf with separate textures could fail with an invalid file name. They are now named `Texture_N`
 
 ## [2.25.0] - 2026-11-16
 - add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`
