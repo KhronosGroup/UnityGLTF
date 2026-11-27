@@ -32,6 +32,17 @@ namespace UnityGLTF
 		internal const string EMPTY_TEXTURE_NAME_SUFFIX = " \0";
 		private Dictionary<int, int> _imageDeduplicationLinks; // Org Image ID -> distinct Image ID
 
+		/// <summary>
+		/// File name of an image URI without its extension, used as the texture name when the image has no name.
+		/// Null for an embedded data URI: its base64 payload contains '/', so Path.GetFileNameWithoutExtension would return
+		/// a fragment of the data, which is not a usable name (e.g. as an export file name).
+		/// </summary>
+		private static string GetImageUriName(string uri)
+		{
+			if (string.IsNullOrEmpty(uri) || URIHelper.IsBase64Uri(uri)) return null;
+			return Path.GetFileNameWithoutExtension(uri);
+		}
+
 		private class TextureData
 		{
 			public Texture Texture = null;
@@ -460,7 +471,7 @@ namespace UnityGLTF
 
 #endif
 			Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, GenerateMipMapsForTextures, isLinear);
-			texture.name = string.IsNullOrEmpty(image.Name) ? Path.GetFileNameWithoutExtension(image.Uri) : image.Name;
+			texture.name = string.IsNullOrEmpty(image.Name) ? GetImageUriName(image.Uri) : image.Name;
 			if (string.IsNullOrEmpty(texture.name))
 				texture.name = $"Texture_{imageCacheIndex.ToString()}{EMPTY_TEXTURE_NAME_SUFFIX}";
 
@@ -859,7 +870,7 @@ namespace UnityGLTF
 
 					unityTexture.name = string.IsNullOrEmpty(image.Name) ?
 						string.IsNullOrEmpty(texture.Name) ?
-							Path.GetFileNameWithoutExtension(image.Uri) :
+							GetImageUriName(image.Uri) :
 							texture.Name :
 						image.Name;
 
