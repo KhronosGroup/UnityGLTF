@@ -796,7 +796,10 @@ namespace UnityGLTF
 		private static string GetImageCacheKey(UniqueTexture uniqueTexture, string mimeType, string encoderSettings = null)
 		{
 			// The key is part of a file name, so "image/jpeg" becomes "image-jpeg"
-			var key = $"{uniqueTexture.GetHashCode()}_{mimeType.Replace('/', '-')}";
+			// The color space is part of the key: when it changes (e.g. the texture importer is set to linear) the texture is reimported,
+			// but its update count doesn't have to change, and the bytes that were encoded for the old color space must not be reused.
+			var colorSpace = uniqueTexture.Texture && uniqueTexture.Texture.isDataSRGB ? "sRGB" : "linear";
+			var key = $"{uniqueTexture.GetHashCode()}_{mimeType.Replace('/', '-')}_{colorSpace}";
 			return string.IsNullOrEmpty(encoderSettings) ? key : $"{key}_{encoderSettings}";
 		}
 
