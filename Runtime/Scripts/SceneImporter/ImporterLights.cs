@@ -36,7 +36,7 @@ namespace UnityGLTF
 						break;
 					case GLTF.Schema.KHR_lights_punctual.LightType.point:
 						newLight.type = LightType.Point;
-						newLight.intensity = (float) light.Intensity * Mathf.PI;
+						newLight.intensity = (float) light.Intensity / Mathf.PI;
 						break;
 				}
 
