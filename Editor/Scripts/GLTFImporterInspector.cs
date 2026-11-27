@@ -1147,6 +1147,11 @@ namespace UnityGLTF
 						return correctLinearSetting;
 					}
 #endif
+					else
+					if (WebPImporterHelper.IsWebP(asset))
+					{
+						return !WebPImporterHelper.TryGetLinear(asset, out var linear) || linear == (x.shouldBeLinear || x.shouldBeNormalMap);
+					}
 				}
 				return true;
 			});
@@ -1215,6 +1220,26 @@ namespace UnityGLTF
 					continue;
 				}
 #endif
+
+				if (WebPImporterHelper.IsWebP(asset))
+				{
+					if (!WebPImporterHelper.TryGetLinear(asset, out var webPIsLinear))
+						continue;
+
+					var webPShouldBeLinear = x.shouldBeLinear || x.shouldBeNormalMap;
+					if (webPIsLinear == webPShouldBeLinear)
+						continue;
+
+					if (!haveStartedAssetEditing)
+					{
+						haveStartedAssetEditing = true;
+						AssetDatabase.StartAssetEditing();
+					}
+
+					WebPImporterHelper.SetLinear(asset, webPShouldBeLinear);
+					asset.SaveAndReimport();
+					continue;
+				}
 
 				if (!(asset is TextureImporter textureImporter)) continue;
 
