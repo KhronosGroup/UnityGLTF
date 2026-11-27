@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - fix: obsolete `ShaderUtil.ShaderPropertyType` / `ShaderUtil.GetPropertyType` warnings in Unity 6.6
 - fix: Asset Importer: a glTF with materials remapped to another glTF (e.g. a material library GLB) failed with "Opening file VirtualArtifacts/Primary/..." on editor startup when the referenced file had changed. Import results (imported materials and textures, extensions in the file, ...) are no longer stored in the import settings (.meta file) but in a hidden sub-asset of the import. All glTF files are reimported once after the update (#919, #920)
 - fix: Asset Importer: remapping a material or texture to another material or texture of the same file didn't work and referenced the file's own sub-assets in the .meta file. These remaps are now stored by name. The importer inspector shows remaps whose target is missing and can remove them
+- fix: Asset Importer: remapped normal map textures are no longer converted to DXT5nm, they are project assets
+- fix: Asset Importer: buffers and images were not found when the URI uses another Unicode normalization form than the file name on disk (e.g. NFD file names from macOS on Windows)
+- fix: export: `NORMAL` and `TANGENT` are normalized, zero-length or NaN values are replaced with a warning, so exported files pass the glTF validator. Points and lines without normals are exported without `NORMAL` / `TANGENT`
+- fix: export: sampler `magFilter` / `minFilter` are always written when set, `magFilter` LINEAR was lost on export
+- fix: Asset Importer: the sampler's filter and wrap modes of a texture file in the project (e.g. the textures of a .gltf) are applied to the texture's importer by "Fix All" in the importer inspector. Point filtered palette textures were blurred after a .gltf roundtrip
+- fix: Asset Importer: "Fix All" in the importer inspector also imports small texture files (up to 128 pixels wide and high) uncompressed. Block compression changes small textures such as color palettes visibly
+- fix: export: textures up to 128 pixels wide and high are always exported as PNG instead of JPEG. JPEG compression shifted the colors of color palettes and lookup tables
 
 ## [2.25.0] - 2026-11-16
 - add: import of GLB version 3 files (glTF 2.1 draft): 64-bit file and chunk lengths, chunks before the JSON chunk, and buffers that reference their BIN chunk with `buffer.chunk`

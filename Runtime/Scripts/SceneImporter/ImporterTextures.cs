@@ -819,6 +819,12 @@ namespace UnityGLTF
 					desiredWrapModeT = TextureWrapMode.Repeat;
 				}
 
+				// For a texture file in the project the filter and wrap mode set on `source` below only live in memory, they are stored in the
+				// texture's importer: the glTF importer takes them from here to fix the importer settings
+				_assetCache.TextureCache[textureIndex].FilterMode = desiredFilterMode;
+				_assetCache.TextureCache[textureIndex].WrapModeU = desiredWrapModeS;
+				_assetCache.TextureCache[textureIndex].WrapModeV = desiredWrapModeT;
+
 				if (isFirstInstance)
 				{
 					source.filterMode = desiredFilterMode;

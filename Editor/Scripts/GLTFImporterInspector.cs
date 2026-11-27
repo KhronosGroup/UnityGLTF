@@ -214,7 +214,7 @@ namespace UnityGLTF
 			if (!importer || !ImportInfo) return;
 			if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(ImportInfo.textureInfos))
 			{
-				EditorGUILayout.HelpBox("Some Textures have incorrect linear/sRGB settings. Results might be incorrect.", MessageType.Warning);
+				EditorGUILayout.HelpBox("Some Textures have incorrect import settings (linear/sRGB, filter and wrap mode, compression of small textures). Results might be incorrect.", MessageType.Warning);
 				if (GUILayout.Button("Fix All"))
 				{
 					GLTFImporterHelper.FixTextureImportSettings(ImportInfo.textureInfos);
@@ -1134,15 +1134,15 @@ namespace UnityGLTF
 						var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
 						
 						var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
-						return correctLinearSetting && correctNormalSetting;
+						return correctLinearSetting && correctNormalSetting && SamplerIsCorrect(textureImporter, x, textureInfos) && CompressionIsCorrect(textureImporter, x);
 					}
-#if HAVE_KTX			
+#if HAVE_KTX
 					else
 					if (KtxImporterHelper.IsKtxOrBasis(asset))
 					{
 						if (!KtxImporterHelper.TryGetLinear(asset, out var linear))
 							return false;
-						
+
 						var correctLinearSetting = (linear == x.shouldBeLinear | x.shouldBeNormalMap);
 						return correctLinearSetting;
 					}
@@ -1150,6 +1150,16 @@ namespace UnityGLTF
 				}
 				return true;
 			});
+		}
+
+		/// <summary>
+		/// A texture file keeps its filter and wrap modes in its importer, not in the glTF. When glTF textures with different samplers share
+		/// one file there is no right setting, so the file is left alone.
+		/// </summary>
+		private static bool SamplerIsCorrect(TextureImporter importer, GLTFImporter.TextureInfo info, List<GLTFImporter.TextureInfo> textureInfos)
+		{
+			if (importer.filterMode == info.filterMode && importer.wrapModeU == info.wrapModeU && importer.wrapModeV == info.wrapModeV) return true;
+			return textureInfos.Any(other => other.texture == info.texture && (other.filterMode != info.filterMode || other.wrapModeU != info.wrapModeU || other.wrapModeV != info.wrapModeV));
 		}
 
 		/// <summary>Textures up to this size (width and height) are imported uncompressed, see <see cref="CompressionIsCorrect"/>.</summary>
@@ -1205,15 +1215,17 @@ namespace UnityGLTF
 					continue;
 				}
 #endif
-				
+
 				if (!(asset is TextureImporter textureImporter)) continue;
 
 				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
 				var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
 				
+				var correctSampler = SamplerIsCorrect(textureImporter, x, textureInfos);
 				var correctCompression = CompressionIsCorrect(textureImporter, x);
+
 				// skip if already correct
-				if (correctLinearSetting && correctNormalSetting)
+				if (correctLinearSetting && correctNormalSetting && correctSampler && correctCompression)
 					continue;
 
 				if (!haveStartedAssetEditing)
@@ -1222,8 +1234,19 @@ namespace UnityGLTF
 					AssetDatabase.StartAssetEditing();
 				}
 
-				textureImporter.sRGBTexture = !x.shouldBeLinear;
-				textureImporter.textureType = x.shouldBeNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+				if (!correctLinearSetting || !correctNormalSetting)
+				{
+					textureImporter.sRGBTexture = !x.shouldBeLinear;
+					textureImporter.textureType = x.shouldBeNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+				}
+				if (!correctCompression)
+					textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
+				if (!correctSampler)
+				{
+					textureImporter.filterMode = x.filterMode;
+					textureImporter.wrapModeU = x.wrapModeU;
+					textureImporter.wrapModeV = x.wrapModeV;
+				}
 				textureImporter.SaveAndReimport();
 			}
 

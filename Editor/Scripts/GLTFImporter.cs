@@ -52,7 +52,9 @@ namespace UnityGLTF
     public class GLTFImporter : ScriptedImporter
     {
 	    // 11: import results moved into the GLTFImportInfo sub-asset
-	    private const int ImporterVersion = 11;
+	    // 12: TextureInfo has the wrap modes of the sampler
+	    // 13: TextureInfo has the filter mode of the sampler
+	    private const int ImporterVersion = 13;
 
 	    private static void EnsureShadersAreLoaded()
 	    {
@@ -176,6 +178,10 @@ namespace UnityGLTF
 	        public Texture2D texture;
 	        public bool shouldBeLinear;
 	        public bool shouldBeNormalMap;
+	        // The filter and wrap modes of the glTF sampler. A texture file in the project keeps its own in its importer.
+	        public FilterMode filterMode = FilterMode.Bilinear;
+	        public TextureWrapMode wrapModeU = TextureWrapMode.Repeat;
+	        public TextureWrapMode wrapModeV = TextureWrapMode.Repeat;
         }
 
         [Serializable]
@@ -1016,7 +1022,7 @@ namespace UnityGLTF
 	        
 	        // run texture verification and warn about wrong configuration
 	        if (!GLTFImporterHelper.TextureImportSettingsAreCorrect(importInfo.textureInfos))
-		        Debug.LogWarning("Some Textures have incorrect linear/sRGB settings. Use the \"Fix All\" button in the importer to adjust.", this);
+		        Debug.LogWarning("Some Textures have incorrect import settings (linear/sRGB, filter and wrap mode, compression of small textures). Use the \"Fix All\" button in the importer to adjust.", this);
 
 	        if (context.SceneImporter != null)
 		        context.SceneImporter.Dispose();
@@ -1217,7 +1223,7 @@ namespace UnityGLTF
 
 			    importInfo.textureInfos = loader.TextureCache
 				    .Where(x => x != null)
-				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear, shouldBeNormalMap = x.IsNormal })
+				    .Select(x => new TextureInfo() { texture = x.Texture, shouldBeLinear = x.IsLinear, shouldBeNormalMap = x.IsNormal, filterMode = x.FilterMode, wrapModeU = x.WrapModeU, wrapModeV = x.WrapModeV })
 				    .ToList();
 
 			    scene = loader.LastLoadedScene;
