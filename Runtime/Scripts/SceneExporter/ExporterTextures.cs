@@ -151,6 +151,17 @@ namespace UnityGLTF
 			GL.sRGBWrite = wr;
 		}
 
+		/// <summary>Textures with a width and height of up to this many pixels are always exported as PNG, see <see cref="CanExportAsJpeg"/>.</summary>
+		private const int SmallTextureSize = 128;
+
+		/// <summary>
+		/// Whether a texture is exported as (lossy) JPEG: it has no alpha and <see cref="GLTFSettings.UseTextureFileTypeHeuristic"/> is on.
+		/// Small textures are mostly color palettes or lookup tables, where every pixel matters, and JPEG compression (chroma subsampling in
+		/// particular) blends the colors of neighboring pixels. They are exported as PNG, which is lossless and also not larger for them.
+		/// </summary>
+		private bool CanExportAsJpeg(bool textureHasAlpha, int width, int height) =>
+			!textureHasAlpha && settings.UseTextureFileTypeHeuristic && Mathf.Max(width, height) > SmallTextureSize;
+
 		private void ExportTexture(Texture2D texture, string outputPath)
 		{
 			var destRenderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
@@ -312,7 +323,7 @@ namespace UnityGLTF
 					break;
 			}
 
-			var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
+			var canExportAsJpeg = CanExportAsJpeg(textureHasAlpha, texture.width, texture.height);
 			var desiredExtension = canExportAsJpeg ? ".jpg" : ".png";
 			if (textureSlot == TextureMapType.Custom_HDR)
 				desiredExtension = ".exr";
@@ -653,7 +664,7 @@ namespace UnityGLTF
 				}
 
 
-				var canExportAsJpeg = !textureHasAlpha && settings.UseTextureFileTypeHeuristic;
+				var canExportAsJpeg = CanExportAsJpeg(textureHasAlpha, width, height);
 				image.MimeType = canExportAsJpeg ? JPEGMimeType : PNGMimeType;
 
 				var cacheKey = GetImageCacheKey(uniqueTexture, image.MimeType, canExportAsJpeg ? $"quality{settings.DefaultJpegQuality}" : null);

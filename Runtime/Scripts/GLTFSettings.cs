@@ -151,7 +151,7 @@ namespace UnityGLTF
 		[SerializeField]
 		[Tooltip("(Experimental) Exports PNG/JPEG directly from disk instead of re-encoding from Unity's import result. No channel repacking will happen for these textures. Textures in other formats (PSD, TGA etc) not supported by glTF and in-memory textures (e.g. RenderTextures) are always re-encoded.")]
 		private bool tryExportTexturesFromDisk = false;
-		[SerializeField] [Tooltip("Determines texture export type (PNG or JPEG) based on alpha channel. When false, always exports lossless PNG files.")]
+		[SerializeField] [Tooltip("Determines texture export type (PNG or JPEG) based on alpha channel. Small textures (up to 128 pixels wide and high) are always exported as PNG. When false, always exports lossless PNG files.")]
 		private bool useTextureFileTypeHeuristic = true;
 		[SerializeField] [Tooltip("Quality setting for exported JPEG files.")]
 		private int defaultJpegQuality = 90;

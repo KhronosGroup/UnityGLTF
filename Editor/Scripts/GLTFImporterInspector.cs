@@ -1152,6 +1152,20 @@ namespace UnityGLTF
 			});
 		}
 
+		/// <summary>Textures up to this size (width and height) are imported uncompressed, see <see cref="CompressionIsCorrect"/>.</summary>
+		private const int SmallTextureSize = 128;
+
+		/// <summary>
+		/// Small textures are mostly color palettes or lookup tables, where every pixel matters. Block compression (DXT, ASTC, ...) keeps only a few
+		/// colors per 4x4 block, which changes such textures visibly, while saving almost no memory. The textures embedded in a .glb or imported
+		/// by the glTF importer itself are uncompressed, so this also makes a texture file look the same as the embedded one.
+		/// </summary>
+		private static bool CompressionIsCorrect(TextureImporter importer, GLTFImporter.TextureInfo info)
+		{
+			if (!info.texture || Mathf.Max(info.texture.width, info.texture.height) > SmallTextureSize) return true;
+			return importer.textureCompression == TextureImporterCompression.Uncompressed;
+		}
+
 		public static void FixTextureImportSettings(GLTFImporter importer)
 		{
 			if (!importer) return;
@@ -1197,6 +1211,7 @@ namespace UnityGLTF
 				var correctLinearSetting = textureImporter.sRGBTexture == !x.shouldBeLinear;
 				var correctNormalSetting = textureImporter.textureType == TextureImporterType.NormalMap == x.shouldBeNormalMap;
 				
+				var correctCompression = CompressionIsCorrect(textureImporter, x);
 				// skip if already correct
 				if (correctLinearSetting && correctNormalSetting)
 					continue;

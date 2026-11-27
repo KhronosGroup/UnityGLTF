@@ -15,9 +15,10 @@ public class TextureExportTests
 		var root = new GameObject("Root");
 		var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
 		quad.transform.SetParent(root.transform, false);
-		// Opaque and different on every run, so the cache has no entry for it yet
-		var texture = new Texture2D(8, 8, TextureFormat.RGB24, false) { name = "Opaque" };
-		texture.SetPixels(Enumerable.Range(0, 64).Select(_ => new Color(Random.value, Random.value, Random.value, 1)).ToArray());
+		// Opaque and different on every run, so the cache has no entry for it yet. Larger than 128 pixels, smaller textures are always exported as PNG
+		const int size = 256;
+		var texture = new Texture2D(size, size, TextureFormat.RGB24, false) { name = "Opaque" };
+		texture.SetPixels(Enumerable.Range(0, size * size).Select(_ => new Color(Random.value, Random.value, Random.value, 1)).ToArray());
 		texture.Apply();
 		var renderer = quad.GetComponent<Renderer>();
 		var material = new Material(renderer.sharedMaterial) { mainTexture = texture };
