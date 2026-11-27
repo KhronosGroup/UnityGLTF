@@ -398,6 +398,8 @@ public partial class RigImportTests
 			// Own settings instead of the project's, so the test doesn't depend on (or create) them
 			settings.UseMainCameraVisibility = false;
 			settings.ExportAnimations = true;
+			// The default quality (90) makes JPEG textures differ slightly after the roundtrip, which the pixel comparison reports as a false negative
+			settings.DefaultJpegQuality = 100;
 			// Cameras are imported disabled by default (CameraImportOption.ImportAndCameraDisabled) and disabled cameras
 			// aren't exported, so they and the 180° flip of their nodes would be lost
 			foreach (var camera in instance.GetComponentsInChildren<Camera>(true))
