@@ -331,11 +331,24 @@ namespace UnityGLTF
 					{
 						var webPData = data.ToArray();
 
-						texture.LoadWebP(webPData, out var webPError, makeNoLongerReadable: makeNoLongerReadable);
+						// LoadWebP() can't be used here: it only loads raw pixel data into the existing texture and doesn't resize it,
+						// so the (small) placeholder texture would stay at its initial size. Like with KTX, create a new texture with the correct size.
+						var webPTextureName = texture.name;
+						var webPTexture = Texture2DExt.CreateTexture2DFromWebP(webPData, GenerateMipMapsForTextures, isLinear, out var webPError, makeNoLongerReadable: makeNoLongerReadable);
 
-						if (webPError != Error.Success)
+						if (webPError != Error.Success || !webPTexture)
 						{
-							Debug.LogError($"Webp Load Error for texture {texture.name}:" + webPError.ToString(), this);
+							Debug.LogError($"Webp Load Error for texture {webPTextureName}:" + webPError.ToString(), this);
+						}
+						else
+						{
+#if UNITY_EDITOR
+							Texture.DestroyImmediate(texture);
+#else
+							Texture.Destroy(texture);
+#endif
+							texture = webPTexture;
+							texture.name = webPTextureName;
 						}
 					}
 					else
